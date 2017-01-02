@@ -125,11 +125,11 @@ CAF_ALLOW_UNSAFE_MESSAGE_TYPE(search_fun_t<line_t>);
 class generate_next_line {
 public:
   generate_next_line(int id, size_t x_size, size_t y_size)
-      : rengine_(id + x_size + y_size),
-        uniform_('a', 'z'),
-        x_size_(x_size),
-        y_size_(y_size),
-        generated_lines_(0) {
+      : rengine_(id + x_size + y_size)
+      , uniform_('a', 'z')
+      , x_size_(x_size)
+      , y_size_(y_size)
+      , generated_lines_(0) {
   }
 
   // generate a random strings
@@ -205,6 +205,7 @@ void caf_main(actor_system& system, const config& cfg) {
   }
   auto c =
     system.spawn(controller<line_t, generate_next_line>, cfg.num_workers);
+    //system.spawn<detached>(controller<line_t, generate_next_line>, cfg.num_workers);
   scoped_actor self{system};
   self->send(c, init_atom::value, cfg.x_size, cfg.y_size);
   line_t search_obj;

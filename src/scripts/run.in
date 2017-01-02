@@ -20,8 +20,6 @@ usage: $0 USERID
           BIN_PATH 
           RUNTIME_FILE 
           MEM_USAGE_FILE 
-          NUMA_LOCAL_FILE
-          NUMA_OTHER__FILE
           LABEL 
           BENCH 
           BENCH_ARGS
@@ -30,8 +28,6 @@ usage: $0 USERID
   BIN_PATH:         path to CAF binaries
   RUNTIME_FILE:     output file for runtime
   MEM_USAGE_FILE:   output file for memory consumption
-  NUMA_LOCAL_FILE:  output file for NUMA local memory access counter 
-  NUMA_OTHER__FILE: output file for NUMA local memory access counter 
   LABEL:            (caf|scala|erlang|foundry|charm|salsa)
   BENCH:            (mixed_case|actor_creation|mailbox_performance|mandelbrot)
 
@@ -59,8 +55,6 @@ username="$1" ; userid=$(id -u $username) ; shift
 binpath="$1" ; shift
 runtime_out_file="$1" ; shift
 mem_usage_out_file="$1" ; shift
-numa_local_out_file="$1" ; shift
-numa_other_out_file="$1" ; shift
 label="$1" ; shift
 bench="$1" ; shift
 
