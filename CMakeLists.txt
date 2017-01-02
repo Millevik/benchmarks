@@ -321,12 +321,25 @@ endif()
 ################################################################################
 
 # add targets for CAF benchmarks
-macro(add_caf_benchmark name)
-  add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/${name}.cpp)
+macro(add_benchmark name)
   target_link_libraries(${name} ${CAF_LIBRARIES} ${LD_FLAGS})
   add_dependencies(all_benchmarks ${name})
 endmacro()
 
+macro(add_caf_benchmark name)
+  add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/${name}.cpp)
+  add_benchmark(${name})
+endmacro()
+
+macro(add_caf_savina_benchmark name)
+  add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/savina/${name}.cpp)
+  add_benchmark(${name})
+endmacro()
+
+macro(add_caf_numa_benchmark name)
+  add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/numa/${name}.cpp)
+  add_benchmark(${name})
+endmacro()
 add_caf_benchmark(actor_creation)
 add_caf_benchmark(mailbox_performance)
 add_caf_benchmark(mixed_case)
@@ -336,6 +349,14 @@ add_caf_benchmark(micro)
 add_caf_benchmark(matrix)
 add_caf_benchmark(matching)
 add_caf_benchmark(scheduling)
+
+add_caf_savina_benchmark(savina_01_pingpong)
+add_caf_savina_benchmark(savina_02_count)
+add_caf_savina_benchmark(savina_08_concdict)
+add_caf_savina_benchmark(savina_11_philosopher)
+add_caf_savina_benchmark(savina_28_nqueenk)
+
+add_caf_numa_benchmark(matrix_search)
 set(CAF_COMPILED_BENCHES "caf ${CAF_COMPILED_BENCHES}")
 
 
