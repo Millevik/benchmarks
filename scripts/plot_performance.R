@@ -26,10 +26,12 @@ data <- read.csv(opt$csvfile)
 data$y_aes <- data$y_aes / opt$ydivider
 data$err <- data$err / opt$ydivider
 
-plot <- ggplot (data, aes(x=x_aes, y=y_aes)) +
-
-    geom_errorbar(aes(ymin = y_aes+ (-err), ymax = y_aes+ err, color=type), width = 2) +
-    geom_line(aes(color=type), size=0.4) +
+plot <- ggplot (data, aes(x=x_aes, y=y_aes))
+#only plot error bars when an error is meassured
+if (sum(data$err) > 0) {
+    plot <- plot + geom_errorbar(aes(ymin = y_aes+ (-err), ymax = y_aes+ err, color=type), width = 2)
+}
+plot <- plot + geom_line(aes(color=type), size=0.4) +
     geom_point(aes(color=type, shape=type), size=2) +
     labs(x=opt$xlabel, y=opt$ylabel) +
     scale_color_discrete(name=opt$ltitle) +

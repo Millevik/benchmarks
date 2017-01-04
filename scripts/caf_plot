@@ -227,9 +227,20 @@ if [ "$Rydivider" != "" ]; then
   Rscript_args="$Rscript_args --ydivider $Rydivider"
 fi
 
+# find R-scripts
+path_to_r_script="."
+# (a) Am I a real file (not symbolic) then it is assumed all R-scripts are in the same directory
+if ! [ -L "$0" ]; then
+  path_to_r_script=$(dirname "$0")
+fi
+# (b) Am I a symbolic link then follow the link to the real file and do (a)
+if [ -L "$0" ]; then
+  path_to_r_script=$(dirname $(readlink -f "$0"))
+fi
+
 if [ $plot_type == $PERFORMANCE_TYPE ]; then
-  eval "Rscript --vanilla $(dirname "$0")/plot_performance.R $Rscript_args"
+  eval "Rscript --vanilla ${path_to_r_script}/plot_performance.R $Rscript_args"
 else
-  eval "Rscript --vanilla $(dirname "$0")/plot_memory.R $Rscript_args"
+  eval "Rscript --vanilla ${path_to_r_script}/plot_memory.R $Rscript_args"
 fi
 

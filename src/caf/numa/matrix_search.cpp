@@ -204,7 +204,7 @@ void caf_main(actor_system& system, const config& cfg) {
     return;
   }
   auto c =
-    system.spawn(controller<line_t, generate_next_line>, cfg.num_workers);
+    system.spawn<detached>(controller<line_t, generate_next_line>, cfg.num_workers);
     //system.spawn<detached>(controller<line_t, generate_next_line>, cfg.num_workers);
   scoped_actor self{system};
   self->send(c, init_atom::value, cfg.x_size, cfg.y_size);
