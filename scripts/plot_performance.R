@@ -16,7 +16,15 @@ option_list <- list(
 	make_option(c("--ylabel"), type="character", default="Time [s]", 
               help="set label of y-axis", metavar="character"),
 	make_option(c("--ydivider"), type="double", default=1, 
-              help="set divider for y-axis", metavar="double")
+              help="set divider for y-axis", metavar="double"),
+	make_option(c("--ymin"), type="double", default=NA, 
+              help="set limits for y-axis", metavar="double"),
+	make_option(c("--ymax"), type="double", default=NA, 
+              help="set limits for y-axis", metavar="double"),
+	make_option(c("--xmin"), type="double", default=NA, 
+              help="set limits for x-axis", metavar="double"),
+	make_option(c("--xmax"), type="double", default=NA, 
+              help="set limits for x-axis", metavar="double")
 ); 
  
 opt_parser = OptionParser(option_list=option_list);
@@ -36,6 +44,8 @@ plot <- plot + geom_line(aes(color=type), size=0.4) +
     labs(x=opt$xlabel, y=opt$ylabel) +
     scale_color_discrete(name=opt$ltitle) +
     scale_shape_discrete(name=opt$ltitle) +
+    ylim(opt$ymin,opt$ymax) +
+    xlim(opt$xmin,opt$xmax) +
     theme_bw() 
 
 if (!is.null(opt$title)) {
