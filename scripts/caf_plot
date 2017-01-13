@@ -221,10 +221,10 @@ while [ $# -ne 0 ]; do
       rename_labels_in_file "$optarg"
       ;;
     --ylim=*)
-      set_axis_limits "x" "$optarg"
+      set_axis_limits "y" "$optarg"
       ;;
     --xlim=*)
-      set_axis_limits "y" "$optarg"
+      set_axis_limits "x" "$optarg"
       ;;
   esac
   shift
