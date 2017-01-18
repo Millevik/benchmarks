@@ -23,9 +23,9 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
 data <- read.csv(opt$csvfile)
-data$y_aes <- data$y_aes / opt$ydivider
+data$yaes <- data$yaes / opt$ydivider
 
-plot <- ggplot (data, aes(factor(type), y_aes)) +
+plot <- ggplot (data, aes(factor(type), yaes)) +
     geom_boxplot() +
     labs(x=opt$xlabel, y=opt$ylabel) +
     theme_bw() 

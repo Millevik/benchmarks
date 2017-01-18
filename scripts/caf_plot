@@ -106,9 +106,9 @@ extract_columns_from_file() {
   if [ $file_header_set == false ]; then
     file_header_set=true
     if [ $plot_type == $PERFORMANCE_TYPE ]; then
-      echo "x_aes , y_aes , err , type" > "$csv_tmp_file"
+      echo "xaes , yaes , err , type" > "$csv_tmp_file"
     else
-      echo "y_aes , type" > "$csv_tmp_file"
+      echo "yaes , type" > "$csv_tmp_file"
     fi
   fi
   # add data to file

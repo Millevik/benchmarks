@@ -31,10 +31,10 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
 data <- read.csv(opt$csvfile)
-data$y_aes <- data$y_aes / opt$ydivider
+data$yaes <- data$yaes / opt$ydivider
 data$err <- data$err / opt$ydivider
 
-plot <- ggplot (data, aes(x=x_aes, y=y_aes))
+plot <- ggplot (data, aes(x=xaes, y=yaes))
 #only plot error bars when an error is meassured
 if (sum(data$err) > 0) {
     xmin = opt$xmin
@@ -43,11 +43,11 @@ if (sum(data$err) > 0) {
         xmin = 0  
     }
     if (is.na(xmax)) {
-        xmax = sum(!is.na(data$x_aes))
+        xmax = sum(!is.na(data$xaes))
     }
-    num_points = sum(unique(data$x_aes) >= xmin & unique(data$x_aes) <= xmax)
+    num_points = sum(unique(data$xaes) >= xmin & unique(data$xaes) <= xmax)
     width = num_points * 0.12 
-    plot <- plot + geom_errorbar(aes(ymin = y_aes+ (-err), ymax = y_aes+ err, color=type), width = width)
+    plot <- plot + geom_errorbar(aes(ymin = yaes + (-err), ymax = yaes + err, color=type), width = width)
 }
 plot <- plot + geom_line(aes(color=type), size=0.4) +
     geom_point(aes(color=type, shape=type), size=2) +
