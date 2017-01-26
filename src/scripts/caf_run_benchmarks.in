@@ -17,10 +17,11 @@ RUN_MIXED_CASE=false
 RUN_ACTOR_CREATION=false
 RUN_MAILBOX_PERFORMANCE=false
 RUN_CUSTOM_BENCH=false
-custom_bench_name=""
-custom_bench_args=""
 
+CUSTOM_BENCH_NAME=""
+CUSTOM_BENCH_ARGS=""
 BENCH_REPETITIONS=10
+LABEL_SUFFIX=""
 # CPU core settings
 MIN_CORES=$(lscpu | grep -E "^Socket\(s\)" | grep -oE "[0-9]+")
 MAX_CORES=$(lscpu | grep -E "^CPU\(s\)" | grep -oE "[0-9]+")
@@ -42,23 +43,25 @@ Usage: $0 default BENCH_USER OUT_DIR [OPTION]...
   BENCH_ARGS: Remainder of the arguments are passed to BENCH
 
   Options:
-    --bin-path=PATH       set folder of benchmark executables 
-                          (default ${BIN_PATH})
-    --label=all|<list>    all    includes \"caf,charm,scala,erlang\"
-                          <list> defines a subset of <all>
-    --bench=all      |
-            <list>   |
-            <custom>      all      includes \"mixed-case,actor-creation,
-                                   mailbox-performance\"
-                          <list>   can be a subset of of <all>
-                          <custom> run your custom benchmark
-                          
-                          <list> defines a subset of <all>
-    --min-cores=NUM       start at NUM cores (default: ${MIN_CORES})
-    --max-cores=NUM       stop at NUM cores (default: ${MAX_CORES})
-    --repetitions=NUM     number of repetitions per bench
-                          (default: ${BENCH_REPETITIONS})
-    --custom-args=ARGS    set arguments for your custom bench
+    --bin-path=PATH        set folder of benchmark executables 
+                           (default ${BIN_PATH})
+    --label=all|<list>     all    includes \"caf,charm,scala,erlang\"
+                           <list> defines a subset of <all>
+    --bench=all      |     
+            <list>   |     
+            <custom>       all      includes \"mixed-case,actor-creation,
+                                    mailbox-performance\"
+                           <list>   can be a subset of of <all>
+                           <custom> run your custom benchmark
+                           
+                           <list> defines a subset of <all>
+    --min-cores=NUM        start at NUM cores (default: ${MIN_CORES})
+    --max-cores=NUM        stop at NUM cores (default: ${MAX_CORES})
+    --repetitions=NUM      number of repetitions per bench
+                           (default: ${BENCH_REPETITIONS})
+    --custom-args=ARGS     set arguments for your custom bench
+    --label-suffix=SUFFIX  add a suffix to the label to distinguish
+                           between measurments with the same label
 "
 
 # parse arguments
@@ -122,7 +125,7 @@ if [ "$DEFAULT_MODE" = true ]; then
                  exit 0 ;;
                else
                  echo "unknown bench \"$i\", run as custom bench"; 
-                 custom_bench_name=$i
+                 CUSTOM_BENCH_NAME=$i
                fi
             ;;
           esac
@@ -131,7 +134,15 @@ if [ "$DEFAULT_MODE" = true ]; then
       --min-cores=*) MIN_CORES=$optarg ;;
       --max-cores=*) MAX_CORES=$optarg ;;
       --repetitions=*) BENCH_REPETITIONS=$optarg ;;
-      --custom-args=*) custom_bench_args=$optarg ;;
+      --custom-args=*) CUSTOM_BENCH_ARGS=$optarg ;;
+      --label-suffix=*) 
+          if ! [[ $optarg =~ ^[a-zA-Z0-9-]+$ ]]; then
+            echo "label suffix <${optarg}> does not match regex ^[a-zA-Z0-9-]+$" 1>&2
+            exit 1
+          else
+            LABEL_SUFFIX="-$optarg" 
+          fi
+        ;;
     esac
     shift
   done
@@ -144,11 +155,8 @@ if [ "$DEFAULT_MODE" = true ]; then
   if $RUN_MIXED_CASE ; then BENCH_STR="mixed_case" $BENCH_STR ; fi
   if $RUN_ACTOR_CREATION ; then BENCH_STR="actor_creation $BENCH_STR" ; fi
   if $RUN_MAILBOX_PERFORMANCE ; then BENCH_STR="mailbox_performance $BENCH_STR" ; fi
-  if $RUN_CUSTOM_BENCH ; then BENCH_STR="$custom_bench_name $BENCH_STR" ; fi
-fi
-
-
-if [ "$DEFAULT_MODE" = false ]; then
+  if $RUN_CUSTOM_BENCH ; then BENCH_STR="$CUSTOM_BENCH_NAME $BENCH_STR" ; fi
+else
   X_LABEL=$1 ; shift
   if ! [[ $X_LABEL =~ ^[a-zA-Z_-]+$ ]]; then
     echo "X_LABEL <${X_LABEL}> does not match regex ^[a-zA-Z_-]+$" 1>&2
@@ -187,17 +195,17 @@ run_bench() {
   for bench in $BENCH_STR ; do
     echo " Bench: $bench"
     if [ "$DEFAULT_MODE" = true ]; then
-      if [ "$bench" == "$custom_bench_name" ]; then
-        args=$custom_bench_args
+      if [ "$bench" == "$CUSTOM_BENCH_NAME" ]; then
+        args=$CUSTOM_BENCH_ARGS
       else 
         args=${!bench}
       fi
     else
       args=$OWN_TEST_ARGS
     fi
-    runtimes="$OUT_DIR/${x_value_n_label}_runtime_${label}-ms_${bench}.txt"
+    runtimes="$OUT_DIR/${x_value_n_label}_runtime_${label}-ms${LABEL_SUFFIX}_${bench}.txt"
     for i in $(seq 1 $BENCH_REPETITIONS) ; do
-      memfile="$OUT_DIR/${x_value_n_label}_memory_${i}_${label}-kB_${bench}.txt"
+      memfile="$OUT_DIR/${x_value_n_label}_memory_${i}_${label}-kB${LABEL_SUFFIX}_${bench}.txt"
       if [ -f "$memfile" ] ; then
         echo "SKIP $label $bench $i (mem file already exists)"
       else
