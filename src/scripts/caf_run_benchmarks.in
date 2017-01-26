@@ -16,7 +16,9 @@ RUN_ERLANG=false
 RUN_MIXED_CASE=false
 RUN_ACTOR_CREATION=false
 RUN_MAILBOX_PERFORMANCE=false
-RUN_MATRIX_SEARCH=false
+RUN_CUSTOM_BENCH=false
+custom_bench_name=""
+custom_bench_args=""
 
 BENCH_REPETITIONS=10
 # CPU core settings
@@ -42,15 +44,21 @@ Usage: $0 default BENCH_USER OUT_DIR [OPTION]...
   Options:
     --bin-path=PATH       set folder of benchmark executables 
                           (default ${BIN_PATH})
-    --label=all|list      <all>  includes \"caf,charm,scala,erlang\"
+    --label=all|<list>    all    includes \"caf,charm,scala,erlang\"
                           <list> defines a subset of <all>
-    --bench=all|list      <all>  includes \"mixed-case,actor-creation,
-                                         mailbox-performance\"
+    --bench=all      |
+            <list>   |
+            <custom>      all      includes \"mixed-case,actor-creation,
+                                   mailbox-performance\"
+                          <list>   can be a subset of of <all>
+                          <custom> run your custom benchmark
+                          
                           <list> defines a subset of <all>
     --min-cores=NUM       start at NUM cores (default: ${MIN_CORES})
     --max-cores=NUM       stop at NUM cores (default: ${MAX_CORES})
     --repetitions=NUM     number of repetitions per bench
                           (default: ${BENCH_REPETITIONS})
+    --custom-args=ARGS    set arguments for your custom bench
 "
 
 # parse arguments
@@ -109,14 +117,21 @@ if [ "$DEFAULT_MODE" = true ]; then
             "mixed-case") RUN_MIXED_CASE=true ;;
             "actor-creation") RUN_ACTOR_CREATION=true ;;
             "mailbox-performance") RUN_MAILBOX_PERFORMANCE=true ;;
-            "matrix-search") RUN_MATRIX_SEARCH=true ;;
-            *) echo "unknown bench argument \"$i\""; exit 0 ;;
+            *) if [ "${#BENCH[@]}" -gt "1" ]; then
+                 echo "unknown bench argument \"$i\""
+                 exit 0 ;;
+               else
+                 echo "unknown bench \"$i\", run as custom bench"; 
+                 custom_bench_name=$i
+               fi
+            ;;
           esac
         done
         ;;
       --min-cores=*) MIN_CORES=$optarg ;;
       --max-cores=*) MAX_CORES=$optarg ;;
       --repetitions=*) BENCH_REPETITIONS=$optarg ;;
+      --custom-args=*) custom_bench_args=$optarg ;;
     esac
     shift
   done
@@ -129,7 +144,7 @@ if [ "$DEFAULT_MODE" = true ]; then
   if $RUN_MIXED_CASE ; then BENCH_STR="mixed_case" $BENCH_STR ; fi
   if $RUN_ACTOR_CREATION ; then BENCH_STR="actor_creation $BENCH_STR" ; fi
   if $RUN_MAILBOX_PERFORMANCE ; then BENCH_STR="mailbox_performance $BENCH_STR" ; fi
-  if $RUN_MATRIX_SEARCH; then BENCH_STR="matrix_search $BENCH_STR" ; fi
+  if $RUN_CUSTOM_BENCH ; then BENCH_STR="$custom_bench_name $BENCH_STR" ; fi
 fi
 
 
@@ -165,7 +180,6 @@ mixed_case="100 100 1000 4"
 actor_creation="20"
 mailbox_performance="100 1000000"
 mandelbrot="16000"
-matrix_search=""
 
 run_bench() {
   label=$1 ; shift
@@ -173,7 +187,11 @@ run_bench() {
   for bench in $BENCH_STR ; do
     echo " Bench: $bench"
     if [ "$DEFAULT_MODE" = true ]; then
-      args=${!bench}
+      if [ "$bench" == "$custom_bench_name" ]; then
+        args=$custom_bench_args
+      else 
+        args=${!bench}
+      fi
     else
       args=$OWN_TEST_ARGS
     fi

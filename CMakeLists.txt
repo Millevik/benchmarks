@@ -243,10 +243,15 @@ if(NOT CAF_NO_ERLANG_BENCHMARKS)
     add_xxx_benchmark(ERLANG erlang ${name} erl beam
                       "${EXECUTABLE_OUTPUT_PATH}" ${ARGN})
   endmacro()
+  macro(add_erlang_bencherl_benchmark name)
+    add_xxx_benchmark(ERLANG erlang/bencherl ${name} erl beam
+                      "${EXECUTABLE_OUTPUT_PATH}" ${ARGN})
+  endmacro()
   add_erlang_benchmark(actor_creation)
   add_erlang_benchmark(mailbox_performance)
   add_erlang_benchmark(mixed_case)
   add_erlang_benchmark(mandelbrot)
+  add_erlang_bencherl_benchmark(bencherl_01_bang)
   add_custom_target(erlang_benchmarks
                     SOURCES ${CAF_ERLANG_SRC_FILES}
                     DEPENDS ${CAF_ERLANG_OUT_FILES})
@@ -340,6 +345,11 @@ macro(add_caf_numa_benchmark name)
   add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/numa/${name}.cpp)
   add_benchmark(${name})
 endmacro()
+
+macro(add_caf_bencherl_benchmark name)
+  add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/bencherl/${name}.cpp)
+  add_benchmark(${name})
+endmacro()
 add_caf_benchmark(actor_creation)
 add_caf_benchmark(mailbox_performance)
 add_caf_benchmark(mixed_case)
@@ -356,7 +366,10 @@ add_caf_savina_benchmark(savina_08_concdict)
 add_caf_savina_benchmark(savina_11_philosopher)
 add_caf_savina_benchmark(savina_28_nqueenk)
 
-add_caf_numa_benchmark(matrix_search)
+add_caf_numa_benchmark(numa_matrix_search)
+
+add_caf_bencherl_benchmark(bencherl_01_bang)
+
 set(CAF_COMPILED_BENCHES "caf ${CAF_COMPILED_BENCHES}")
 
 
