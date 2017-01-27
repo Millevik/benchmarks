@@ -39,7 +39,7 @@ Usage: $0 default BENCH_USER OUT_DIR [OPTION]...
   X_VALUE:    Value of the control variable
   LABEL:      Benchmark topic (similar to --label, musst match regex ^[a-zA-Z0-9]+$, no underscore allowed!) 
   BIN_PATH:   Folder of benchmark executables
-  BENCH:      Name of the benchmark executable (musst match regex ^[a-zA-Z_]+$)
+  BENCH:      Name of the benchmark executable (musst match regex ^[a-zA-Z0-9_]+$)
   BENCH_ARGS: Remainder of the arguments are passed to BENCH
 
   Options:
@@ -125,6 +125,10 @@ if [ "$DEFAULT_MODE" = true ]; then
                  exit 0
                else
                  echo "unknown bench \"$i\", run as custom bench"; 
+                 if ! [[ $i =~ ^[a-zA-Z0-9_-]+$ ]]; then
+                   echo "custom bench <${i}> does not match regex ^[a-zA-Z0-9_-]+$" 1>&2
+                   exit 1
+                 fi
                  CUSTOM_BENCH_NAME=$i
                  RUN_CUSTOM_BENCH=true
                fi
@@ -179,8 +183,8 @@ else
   fi
   BIN_PATH=$1 ; shift
   BENCH_STR=$1 ; shift
-  if ! [[ $BENCH_STR =~ ^[a-zA-Z_-]+$ ]]; then
-    echo "BENCH <${BENCH_STR}> does not match regex ^[a-zA-Z_-]+$" 1>&2
+  if ! [[ $BENCH_STR =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    echo "BENCH <${BENCH_STR}> does not match regex ^[a-zA-Z0-9_-]+$" 1>&2
     exit 1
   fi
   OWN_TEST_ARGS=$@ 
@@ -228,7 +232,7 @@ run_bench() {
 }
 
 for label in $LABEL_STR; do
-  echo "-- Label: $label"
+  echo "-- Label: ${label}${LABEL_SUFFIX}"
   if [ "$DEFAULT_MODE" = true ]; then
     for NumCores in $(seq $MIN_CORES $MIN_CORES $MAX_CORES); do
       $CAF_HOME/benchmarks/scripts/activate_cores $NumCores >> /dev/null
