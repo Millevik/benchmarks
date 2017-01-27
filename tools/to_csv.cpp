@@ -163,7 +163,7 @@ pair<regex, map<string, size_t>> read_format(const char* format_str) {
   replace_all(fstr, "{X-LABEL}", "([a-zA-Z_\\-]+)");
   replace_all(fstr, "{MEMORY_OR_RUNTIME}", "(runtime|memory_[0-9]+)");
   replace_all(fstr, "{LABEL}", "([a-zA-Z0-9\\-]+)");
-  replace_all(fstr, "{BENCHMARK}", "([a-zA-Z_\\-]+)");
+  replace_all(fstr, "{BENCHMARK}", "([a-zA-Z0-9_\\-]+)");
   regex rx{fstr};
   return make_pair(std::move(rx), std::move(mapping));
 }
