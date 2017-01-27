@@ -122,10 +122,11 @@ if [ "$DEFAULT_MODE" = true ]; then
             "mailbox-performance") RUN_MAILBOX_PERFORMANCE=true ;;
             *) if [ "${#BENCH[@]}" -gt "1" ]; then
                  echo "unknown bench argument \"$i\""
-                 exit 0 ;;
+                 exit 0
                else
                  echo "unknown bench \"$i\", run as custom bench"; 
                  CUSTOM_BENCH_NAME=$i
+                 RUN_CUSTOM_BENCH=true
                fi
             ;;
           esac
@@ -135,7 +136,7 @@ if [ "$DEFAULT_MODE" = true ]; then
       --max-cores=*) MAX_CORES=$optarg ;;
       --repetitions=*) BENCH_REPETITIONS=$optarg ;;
       --custom-args=*) 
-        if [ "RUN_CUSTOM_BENCH" = true]; then
+        if [ "$RUN_CUSTOM_BENCH" = true ]; then
           CUSTOM_BENCH_ARGS=$optarg
         else
           # usability bug

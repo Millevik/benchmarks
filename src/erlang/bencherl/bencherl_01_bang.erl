@@ -57,6 +57,7 @@ rec(M, N)  -> receive M -> rec(M, N-1) end.
 
 start(Args) ->
   [Version|T] = Args,
-  [Cores|_] = T,
+  [CoresAtom|_] = T,
+  Cores = list_to_integer(atom_to_list(CoresAtom)),
   Conf = [{number_of_cores, Cores}],
   run(lists:last(bench_args(Version,Conf)), undefined, undefined).
