@@ -134,7 +134,15 @@ if [ "$DEFAULT_MODE" = true ]; then
       --min-cores=*) MIN_CORES=$optarg ;;
       --max-cores=*) MAX_CORES=$optarg ;;
       --repetitions=*) BENCH_REPETITIONS=$optarg ;;
-      --custom-args=*) CUSTOM_BENCH_ARGS=$optarg ;;
+      --custom-args=*) 
+        if [ "RUN_CUSTOM_BENCH" = true]; then
+          CUSTOM_BENCH_ARGS=$optarg
+        else
+          # usability bug
+          echo "To set custom arguments the bench musst be a custom bench" 1>&2
+          exit 1 
+        fi
+        ;;
       --label-suffix=*) 
           if ! [[ $optarg =~ ^[a-zA-Z0-9-]+$ ]]; then
             echo "label suffix <${optarg}> does not match regex ^[a-zA-Z0-9-]+$" 1>&2
