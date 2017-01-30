@@ -53,10 +53,18 @@ behavior rec_fun(event_based_actor*, int n) {
   };
 }
 
+void run(actor_system& system, int s, int m) {
+  bang_t bang;
+  auto rec = system.spawn(rec_fun, s * m);
+  for (int i = 0; i < s; ++i) {
+    system.spawn(send_fun, rec, bang, m); 
+  }
+}
+
 void usage() {
-  cout << "usage: bencherl_01_bang VERSION NUM_SENDER" << endl
+  cout << "usage: bencherl_01_bang VERSION NUM_CORES" << endl
        << "       VERSION:      short|intermediate|long " << endl
-       << "       NUM-SENDER:   number of sender" << endl << endl
+       << "       NUM_CORES:    number of cores" << endl << endl
        << "  for details see http://release.softlab.ntua.gr/bencherl/" << endl;
   exit(1);
 }
@@ -67,7 +75,9 @@ int main(int argc, char** argv) {
     usage();
   string version = argv[1];
   int f;
-  if (version == "short") {
+  if (version == "test") {
+    f = 1;
+  } else if (version == "short") {
     f = 16;
   } else if (version == "intermediate") {
     f = 55;
@@ -81,13 +91,8 @@ int main(int argc, char** argv) {
   actor_system_config cfg;
   cfg.parse(argc, argv, "caf-application.ini");
   actor_system system{cfg};
-  // start bench
   int s = f * cores; //num of senders 
   int m = f * cores; //num of messages
-  bang_t bang;
-  auto rec = system.spawn(rec_fun, s * m);
-  for (int i = 0; i < s; ++i) {
-    system.spawn(send_fun, rec, bang, m); 
-  }
+  run(system, s, m);
 }
 

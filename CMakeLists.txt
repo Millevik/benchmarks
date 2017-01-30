@@ -369,6 +369,7 @@ add_caf_savina_benchmark(savina_28_nqueenk)
 add_caf_numa_benchmark(numa_matrix_search)
 
 add_caf_bencherl_benchmark(bencherl_01_bang)
+add_caf_bencherl_benchmark(bencherl_02_big)
 
 set(CAF_COMPILED_BENCHES "caf ${CAF_COMPILED_BENCHES}")
 

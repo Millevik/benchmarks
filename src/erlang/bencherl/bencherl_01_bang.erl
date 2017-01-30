@@ -55,6 +55,7 @@ send(T, M, N)   -> T ! M, send(T, M, N-1).
 rec(_M, 0) -> ok;
 rec(M, N)  -> receive M -> rec(M, N-1) end.
 
+% added
 start(Args) ->
   [Version|T] = Args,
   [CoresAtom|_] = T,
