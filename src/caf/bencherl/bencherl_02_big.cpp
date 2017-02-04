@@ -79,7 +79,7 @@ private:
   message_handler b_E_E_false = {
     f_answer_ping_,
     [=] (die_atom) {
-      this->quit();
+      //this->quit();
     }
   };
 
@@ -95,7 +95,7 @@ private:
       pinged_procs_.emplace_back(*ping_it_);
       ++ping_it_;
       if (ping_it_ == procs_.end()) {
-        //procs_.clear();
+        procs_.clear();
         this->become(b_E_F_ReportTo); 
         return;
       }
@@ -132,7 +132,8 @@ procs_t spawn_procs(actor_system& system, int n) {
   procs_t result;
   result.reserve(n);
   for (int i = 0; i < n; ++i) {
-    result.emplace_back(system.spawn<pinger>()) ;
+    //result.emplace_back(system.spawn<pinger>()) ;
+    result.emplace_back(system.spawn<pinger, lazy_init>()) ;
   }
   return result;
 }
