@@ -71,6 +71,7 @@ private:
   message_handler b_E_E_true_ = {
     [=] (procs_atom, procs_t& procs, actor report_to) {
       procs_ = procs;
+      pinged_procs_.reserve(procs_.size());
       report_to_ = report_to;
       ping_it_ = procs_.begin();
       this->become(b_F_F_ReportTo_);
@@ -144,6 +145,7 @@ void send_procs(scoped_actor& self, procs_t& procs) {
 
 procs_t spawn_procs(actor_system& system, int n) {
   procs_t result;
+  result.reserve(n);
   for (int i = 0; i < n; ++i) {
     //result.insert(system.spawn<pinger>()) ;
     result.emplace_back(system.spawn<pinger>()) ;
