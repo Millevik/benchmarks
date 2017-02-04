@@ -132,8 +132,7 @@ procs_t spawn_procs(actor_system& system, int n) {
   procs_t result;
   result.reserve(n);
   for (int i = 0; i < n; ++i) {
-    //result.emplace_back(system.spawn<pinger>()) ;
-    result.emplace_back(system.spawn<pinger, lazy_init>()) ;
+    result.emplace_back(system.spawn<pinger>()) ;
   }
   return result;
 }
