@@ -34,7 +34,6 @@ using die_atom = atom_constant<atom("die")>;
 using ping_atom = atom_constant<atom("ping")>;
 using pong_atom = atom_constant<atom("pong")>;
 
-//using procs_t = set<actor>;
 using procs_t = vector<actor>;
 
 class pinger : public event_based_actor {
@@ -55,7 +54,6 @@ private:
 
   std::function<void(pong_atom)> f_react_to_pong_ = {
     [this] (pong_atom) {
-      //auto it = pinged_procs_.find(actor_cast<actor>(this->current_sender()));
       auto it =
         find(begin(pinged_procs_), end(pinged_procs_), current_sender());
       if (it != pinged_procs_.end()) {
@@ -73,7 +71,6 @@ private:
       procs_ = procs;
       pinged_procs_.reserve(procs_.size());
       report_to_ = report_to;
-      ping_it_ = procs_.begin();
       this->become(b_F_F_ReportTo_);
     }
   };
@@ -93,22 +90,10 @@ private:
   behavior b_F_F_ReportTo_ = {
     f_answer_ping_,
     after(std::chrono::seconds(0)) >> [=] {
-      //auto it = procs_.begin();
-      //if (it != procs_.end()) {
-        //this->send(*it, ping_atom::value);
-        //pinged_procs_.insert(*it);
-        //procs_.erase(it);
-        //if (procs_.empty()) {
-          //this->become(b_E_F_ReportTo); 
-          //return;
-        //}
-      //}
-      //this->become(b_F_F_ReportTo_);
-      this->send(*ping_it_, ping_atom::value);
-      //pinged_procs_.insert(*ping_it_);
-      pinged_procs_.emplace_back(*ping_it_);
+      this->send(procs_[ping_it_], ping_atom::value);
+      pinged_procs_.emplace_back(procs_[ping_it_]);
       ++ping_it_;
-      if (ping_it_ == procs_.end()) {
+      if (ping_it_ == procs_.size() ) {
         procs_.clear();
         this->become(b_E_F_ReportTo); 
         return;
@@ -119,7 +104,7 @@ private:
   procs_t procs_;
   procs_t pinged_procs_;
   actor report_to_;
-  procs_t::iterator ping_it_;
+  size_t ping_it_;
 };
 
 
@@ -127,7 +112,6 @@ void receive_msgs(scoped_actor& self, procs_t procs) {
   while (!procs.empty()) {
     self->receive(
       [&] (done_atom) {
-        //auto it = procs.find(actor_cast<actor>(self->current_sender()));
         auto it = find(begin(procs), end(procs),
                        actor_cast<actor>(self->current_sender()));
         if (it != procs.end()) {
@@ -147,7 +131,6 @@ procs_t spawn_procs(actor_system& system, int n) {
   procs_t result;
   result.reserve(n);
   for (int i = 0; i < n; ++i) {
-    //result.insert(system.spawn<pinger>()) ;
     result.emplace_back(system.spawn<pinger>()) ;
   }
   return result;
