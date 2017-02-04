@@ -104,7 +104,7 @@ private:
   procs_t procs_;
   procs_t pinged_procs_;
   actor report_to_;
-  size_t ping_it_;
+  size_t ping_it_ = 0;
 };
 
 
