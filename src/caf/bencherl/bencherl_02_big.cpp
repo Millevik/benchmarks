@@ -69,6 +69,7 @@ private:
     [=] (procs_atom, procs_t& procs, actor report_to) {
       procs_ = procs;
       report_to_ = report_to;
+      ping_it_ = procs_.begin();
       this->become(b_F_F_ReportTo_);
     }
   };
@@ -88,23 +89,33 @@ private:
   behavior b_F_F_ReportTo_ = {
     f_answer_ping_,
     after(std::chrono::seconds(0)) >> [=] {
-      auto it = procs_.begin();
-      if (it != procs_.end()) {
-        this->send(*it, ping_atom::value);
-        pinged_procs_.insert(*it);
-        procs_.erase(it);
+      //auto it = procs_.begin();
+      //if (it != procs_.end()) {
+        //this->send(*it, ping_atom::value);
+        //pinged_procs_.insert(*it);
+        //procs_.erase(it);
+        //if (procs_.empty()) {
+          //this->become(b_E_F_ReportTo); 
+          //return;
+        //}
+      //}
+      //this->become(b_F_F_ReportTo_);
+      if (ping_it_ != procs_.end()) {
+        this->send(*ping_it_, ping_atom::value);
+        ++ping_it_;
+        pinged_procs_.insert(*ping_it_);
         if (procs_.empty()) {
           this->become(b_E_F_ReportTo); 
           return;
         }
       }
-      //this->become(b_F_F_ReportTo_);
     }
   };
 
   procs_t procs_;
   procs_t pinged_procs_;
   actor report_to_;
+  procs_t::iterator ping_it_;
 };
 
 
