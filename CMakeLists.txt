@@ -252,6 +252,7 @@ if(NOT CAF_NO_ERLANG_BENCHMARKS)
   add_erlang_benchmark(mixed_case)
   add_erlang_benchmark(mandelbrot)
   add_erlang_bencherl_benchmark(bencherl_01_bang)
+  add_erlang_bencherl_benchmark(bencherl_02_big)
   add_custom_target(erlang_benchmarks
                     SOURCES ${CAF_ERLANG_SRC_FILES}
                     DEPENDS ${CAF_ERLANG_OUT_FILES})

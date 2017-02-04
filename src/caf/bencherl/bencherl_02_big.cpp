@@ -34,68 +34,102 @@ using die_atom = atom_constant<atom("die")>;
 using ping_atom = atom_constant<atom("ping")>;
 using pong_atom = atom_constant<atom("pong")>;
 
-struct pinger_state {
-  set<actor> procs;
-  actor report_to;
-};
+using procs_t = set<actor>;
 
-behavior pinger(stateful_actor<pinger_state>* self) {
-  return {
-    [=] (procs_atom, set<actor>& procs, actor report_to) {
-      self->state.procs.swap(procs);
-      self->state.report_to = report_to;
-      for (auto& p : self->state.procs) {
-        self->request(p, infinite, ping_atom::value).then(
-          [=](pong_atom) {
-            auto it =
-              self->state.procs.find(p);
-            if (it != self->state.procs.end()) {
-              self->state.procs.erase(it);
-            } else {
-              cerr << "Error should never be reached" << endl;
-              // to indicate this error we wait for a long time
-              // similar to bencherl big
-              this_thread::sleep_for(std::chrono::hours::max());
-            }
-            if (self->state.procs.empty()) {
-              self->send(self->state.report_to, done_atom::value);
-            }
-          }
-        );
+class pinger : public event_based_actor {
+public:
+  pinger(actor_config& cfg) : event_based_actor(cfg) {
+    this->set_default_handler(skip);
+  }
+
+  behavior_type make_behavior() override {
+    return b_E_E_true_;
+  }
+private:
+  std::function<void(ping_atom)> f_answer_ping_ = {
+    [this] (ping_atom) {
+      this->send(actor_cast<actor>(this->current_sender()), pong_atom::value);
+    } 
+  };
+
+  std::function<void(pong_atom)> f_react_to_pong_ = {
+    [this] (pong_atom) {
+      auto it = pinged_procs_.find(actor_cast<actor>(this->current_sender())); 
+      if (it != pinged_procs_.end()) {
+        pinged_procs_.erase(it); 
+        if (pinged_procs_.empty()) { //b_E_E_ReportTo
+          this->send(report_to_, done_atom::value);
+          this->become(b_E_E_false);
+        }
       }
-    },
-    [=] (ping_atom) {
-      return pong_atom::value; 
-    },
-    [=] (die_atom) {
-      //self->quit(); 
+    } 
+  };
+
+  message_handler b_E_E_true_ = {
+    [=] (procs_atom, procs_t& procs, actor report_to) {
+      procs_ = procs;
+      report_to_ = report_to;
+      this->become(b_F_F_ReportTo_);
     }
   };
-}
 
-void receive_msgs(scoped_actor& self, set<actor> procs) {
-  while(!procs.empty()){
+  message_handler b_E_E_false = {
+    f_answer_ping_,
+    [=] (die_atom) {
+      //this->quit();
+    }
+  };
+
+  message_handler b_E_F_ReportTo = {
+    f_answer_ping_,
+    f_react_to_pong_ 
+  };
+
+  behavior b_F_F_ReportTo_ = {
+    f_answer_ping_,
+    after(std::chrono::seconds(0)) >> [=] {
+      auto it = procs_.begin();
+      if (it != procs_.end()) {
+        this->send(*it, ping_atom::value);
+        pinged_procs_.insert(*it);
+        procs_.erase(it);
+        if (procs_.empty()) {
+          this->become(b_E_F_ReportTo); 
+          return;
+        }
+      }
+      this->become(b_F_F_ReportTo_);
+    }
+  };
+
+  procs_t procs_;
+  procs_t pinged_procs_;
+  actor report_to_;
+};
+
+
+void receive_msgs(scoped_actor& self, procs_t procs) {
+  while (!procs.empty()) {
     self->receive(
       [&] (done_atom) {
         auto it = procs.find(actor_cast<actor>(self->current_sender()));
         if (it != procs.end()) {
           procs.erase(it); 
         }
-      }
-    );
+     });
   }
 }
 
-void send_procs(set<actor>& procs, scoped_actor& self) {
+void send_procs(scoped_actor& self, procs_t& procs) {
   for (auto& p: procs) {
     self->send(p, procs_atom::value, procs, self);
   }
 }
 
-set<actor> spawn_procs(actor_system& system, int n) {
-  set<actor> result;
+procs_t spawn_procs(actor_system& system, int n) {
+  procs_t result;
   for (int i = 0; i < n; ++i) {
-    result.insert(system.spawn(pinger)) ;
+    result.insert(system.spawn<pinger>()) ;
   }
   return result;
 }
@@ -103,7 +137,7 @@ set<actor> spawn_procs(actor_system& system, int n) {
 void run(actor_system& system, int n) {
   auto procs = spawn_procs(system, n);
   scoped_actor self{system};
-  send_procs(procs, self);
+  send_procs(self, procs);
   receive_msgs(self, procs);
   for (auto& p: procs) {
     self->send(p, die_atom::value);
@@ -133,7 +167,7 @@ int main(int argc, char** argv) {
   } else if (version == "long") {
     f = 24;
   } else {
-    std::cerr << "version musst be short,intermediate or long" << std::endl; ;
+    std::cerr << "version musst be short,intermediate or long" << std::endl;
     exit(1);
   }
   int cores = std::stoi(argv[2]);
