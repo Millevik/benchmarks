@@ -34,7 +34,8 @@ using die_atom = atom_constant<atom("die")>;
 using ping_atom = atom_constant<atom("ping")>;
 using pong_atom = atom_constant<atom("pong")>;
 
-using procs_t = set<actor>;
+//using procs_t = set<actor>;
+using procs_t = vector<actor>;
 
 class pinger : public event_based_actor {
 public:
@@ -54,7 +55,9 @@ private:
 
   std::function<void(pong_atom)> f_react_to_pong_ = {
     [this] (pong_atom) {
-      auto it = pinged_procs_.find(actor_cast<actor>(this->current_sender())); 
+      //auto it = pinged_procs_.find(actor_cast<actor>(this->current_sender()));
+      auto it =
+        find(begin(pinged_procs_), end(pinged_procs_), current_sender());
       if (it != pinged_procs_.end()) {
         pinged_procs_.erase(it); 
         if (pinged_procs_.empty()) { //b_E_E_ReportTo
@@ -101,7 +104,8 @@ private:
       //}
       //this->become(b_F_F_ReportTo_);
       this->send(*ping_it_, ping_atom::value);
-      pinged_procs_.insert(*ping_it_);
+      //pinged_procs_.insert(*ping_it_);
+      pinged_procs_.emplace_back(*ping_it_);
       ++ping_it_;
       if (ping_it_ == procs_.end()) {
         procs_.clear();
@@ -122,7 +126,9 @@ void receive_msgs(scoped_actor& self, procs_t procs) {
   while (!procs.empty()) {
     self->receive(
       [&] (done_atom) {
-        auto it = procs.find(actor_cast<actor>(self->current_sender()));
+        //auto it = procs.find(actor_cast<actor>(self->current_sender()));
+        auto it = find(begin(procs), end(procs),
+                       actor_cast<actor>(self->current_sender()));
         if (it != procs.end()) {
           procs.erase(it); 
         }
@@ -139,7 +145,8 @@ void send_procs(scoped_actor& self, procs_t& procs) {
 procs_t spawn_procs(actor_system& system, int n) {
   procs_t result;
   for (int i = 0; i < n; ++i) {
-    result.insert(system.spawn<pinger>()) ;
+    //result.insert(system.spawn<pinger>()) ;
+    result.emplace_back(system.spawn<pinger>()) ;
   }
   return result;
 }
