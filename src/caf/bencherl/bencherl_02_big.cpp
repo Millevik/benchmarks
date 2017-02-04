@@ -71,6 +71,7 @@ private:
       procs_ = procs;
       pinged_procs_.reserve(procs_.size());
       report_to_ = report_to;
+      ping_it_ = procs_.begin();
       this->become(b_F_F_ReportTo_);
     }
   };
@@ -78,7 +79,7 @@ private:
   message_handler b_E_E_false = {
     f_answer_ping_,
     [=] (die_atom) {
-      //this->quit();
+      this->quit();
     }
   };
 
@@ -90,11 +91,11 @@ private:
   behavior b_F_F_ReportTo_ = {
     f_answer_ping_,
     after(std::chrono::seconds(0)) >> [=] {
-      this->send(procs_[ping_it_], ping_atom::value);
-      pinged_procs_.emplace_back(procs_[ping_it_]);
+      this->send(*ping_it_, ping_atom::value);
+      pinged_procs_.emplace_back(*ping_it_);
       ++ping_it_;
-      if (ping_it_ == procs_.size() ) {
-        procs_.clear();
+      if (ping_it_ == procs_.end()) {
+        //procs_.clear();
         this->become(b_E_F_ReportTo); 
         return;
       }
@@ -104,7 +105,7 @@ private:
   procs_t procs_;
   procs_t pinged_procs_;
   actor report_to_;
-  size_t ping_it_ = 0;
+  procs_t::iterator ping_it_;
 };
 
 
