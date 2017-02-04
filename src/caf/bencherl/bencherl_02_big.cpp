@@ -100,14 +100,13 @@ private:
         //}
       //}
       //this->become(b_F_F_ReportTo_);
-      if (ping_it_ != procs_.end()) {
-        this->send(*ping_it_, ping_atom::value);
-        ++ping_it_;
-        pinged_procs_.insert(*ping_it_);
-        if (procs_.empty()) {
-          this->become(b_E_F_ReportTo); 
-          return;
-        }
+      this->send(*ping_it_, ping_atom::value);
+      pinged_procs_.insert(*ping_it_);
+      ++ping_it_;
+      if (ping_it_ == procs_.end()) {
+        procs_.clear();
+        this->become(b_E_F_ReportTo); 
+        return;
       }
     }
   };
