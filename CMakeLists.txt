@@ -253,6 +253,7 @@ if(NOT CAF_NO_ERLANG_BENCHMARKS)
   add_erlang_benchmark(mandelbrot)
   add_erlang_bencherl_benchmark(bencherl_01_bang)
   add_erlang_bencherl_benchmark(bencherl_02_big)
+  add_erlang_bencherl_benchmark(bencherl_03_ehb)
   add_custom_target(erlang_benchmarks
                     SOURCES ${CAF_ERLANG_SRC_FILES}
                     DEPENDS ${CAF_ERLANG_OUT_FILES})
@@ -326,6 +327,9 @@ endif()
 #                                     CAF                                      #
 ################################################################################
 
+set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+include_directories("${INCLUDE_DIR}")
+
 # add targets for CAF benchmarks
 macro(add_benchmark name)
   target_link_libraries(${name} ${CAF_LIBRARIES} ${LD_FLAGS})
@@ -351,6 +355,7 @@ macro(add_caf_bencherl_benchmark name)
   add_executable(${name} ${CMAKE_CURRENT_SOURCE_DIR}/src/caf/bencherl/${name}.cpp)
   add_benchmark(${name})
 endmacro()
+
 add_caf_benchmark(actor_creation)
 add_caf_benchmark(mailbox_performance)
 add_caf_benchmark(mixed_case)
@@ -371,6 +376,7 @@ add_caf_numa_benchmark(numa_matrix_search)
 
 add_caf_bencherl_benchmark(bencherl_01_bang)
 add_caf_bencherl_benchmark(bencherl_02_big)
+add_caf_bencherl_benchmark(bencherl_03_ehb)
 
 set(CAF_COMPILED_BENCHES "caf ${CAF_COMPILED_BENCHES}")
 

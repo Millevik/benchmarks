@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
   } else if (version == "long") {
     f = 79;
   } else {
-    std::cerr << "version musst be short,intermediate or long" << std::endl; ;
+    std::cerr << "version musst be short, intermediate or long" << std::endl;
     exit(1);
   }
   int cores = std::stoi(argv[2]);

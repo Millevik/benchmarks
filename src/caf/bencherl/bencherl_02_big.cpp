@@ -19,10 +19,11 @@
  ******************************************************************************/
 
 #include <iostream>
-#include <thread> //sleep_for
 #include <chrono>
 
 #include "caf/all.hpp"
+
+#include "erlang_pattern_matching.hpp"
 
 using namespace std;
 using namespace caf;
@@ -52,20 +53,6 @@ private:
     } 
   };
 
-  std::function<void(pong_atom)> f_react_to_pong_ = {
-    [this] (pong_atom) {
-      auto it =
-        find(begin(pinged_procs_), end(pinged_procs_), current_sender());
-      if (it != pinged_procs_.end()) {
-        pinged_procs_.erase(it); 
-        if (pinged_procs_.empty()) { //b_E_E_ReportTo
-          this->send(report_to_, done_atom::value);
-          this->become(b_E_E_false);
-        }
-      }
-    } 
-  };
-
   message_handler b_E_E_true_ = {
     [=] (procs_atom, procs_t& procs, actor report_to) {
       procs_ = procs;
@@ -79,13 +66,18 @@ private:
   message_handler b_E_E_false = {
     f_answer_ping_,
     [=] (die_atom) {
-      //this->quit();
+      this->quit();
     }
   };
 
   message_handler b_E_F_ReportTo = {
     f_answer_ping_,
-    f_react_to_pong_ 
+    [=] (pong_atom) { // react_to_pong
+      if (this->erl.match(actor_cast<actor>(this->current_sender()))){
+        this->send(report_to_, done_atom::value);
+        this->become(b_E_E_false);
+      }
+    }
   };
 
   behavior b_F_F_ReportTo_ = {
@@ -96,6 +88,7 @@ private:
       ++ping_it_;
       if (ping_it_ == procs_.end()) {
         procs_.clear();
+        erl.foreach(std::move(pinged_procs_));
         this->become(b_E_F_ReportTo); 
         return;
       }
@@ -106,6 +99,7 @@ private:
   procs_t pinged_procs_;
   actor report_to_;
   procs_t::iterator ping_it_;
+  erlang_pattern_matching<actor> erl;
 };
 
 
@@ -170,7 +164,7 @@ int main(int argc, char** argv) {
   } else if (version == "long") {
     f = 24;
   } else {
-    std::cerr << "version musst be short,intermediate or long" << std::endl;
+    std::cerr << "version musst be short, intermediate or long" << std::endl;
     exit(1);
   }
   int cores = std::stoi(argv[2]);
