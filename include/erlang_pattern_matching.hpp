@@ -20,24 +20,21 @@ public:
   bitvector& operator = (bitvector&&) = default;
   bitvector& operator = (const bitvector&) = default;
 
-  bitvector(size_t num_bits, bool value)
-      : v_(get_block_idx(num_bits - 1) + 1, value ? full_value : empty_value) 
+  bitvector(size_t num_bits)
+      : v_(get_block_idx(num_bits - 1) + 1, empty_value) 
       , num_bits_(num_bits)
       , padding_mask_(full_value << (num_bits % num_wrapper_bits))
   { } 
 
-  inline void set(size_t bit_idx, bool v) {
-    if (v)
+  inline void log_a_match(size_t bit_idx) {
       v_[get_block_idx(bit_idx)] |= get_block_mask(bit_idx);
-    else
-      v_[get_block_idx(bit_idx)] &= ~get_block_mask(bit_idx);
   }
 
-  inline bool get(size_t bit_idx) const {
+  inline bool get_match(size_t bit_idx) const {
     return v_[get_block_idx(bit_idx)] & get_block_mask(bit_idx);
   }
 
-  bool all_set() const {
+  bool all_matched() const {
     for (size_t i = 0; i < v_.size() - 1; ++i)
       if (v_[i] != full_value)
         return false; 
@@ -46,16 +43,14 @@ public:
     return true;
   }
   
-  inline size_t size() const {
-    return num_bits_;
-  }
-
   std::string to_string() const {
     std::stringstream ss;
     ss << "bit size: " << num_bits_ << "\n";
     for (size_t i = 0; i < v_.size(); ++i)
-      ss << "block idx(" << i << "):" << std::bitset<num_wrapper_bits>(v_[i]) << "\n";
-    ss << "padding_mask: " << std::bitset<num_wrapper_bits>(padding_mask_) << std::endl;
+      ss << "block idx(" << i << "):" << std::bitset<num_wrapper_bits>(v_[i])
+         << "\n";
+    ss << "padding_mask: " << std::bitset<num_wrapper_bits>(padding_mask_)
+       << std::endl;
     return ss.str();
   }
 private:
@@ -73,20 +68,66 @@ private:
   wrapper_type padding_mask_;
 };
 
-template<class T>
+class vector_counter {
+public:
+  vector_counter() = default;
+  vector_counter(const vector_counter&) = default;
+  vector_counter(vector_counter&&) = default;
+  vector_counter& operator = (vector_counter&&) = default;
+  vector_counter& operator = (const vector_counter&) = default;
+
+  vector_counter(size_t num_matches, size_t count_to)
+      : v_(num_matches, 0)
+      , count_to_(count_to)
+  { } 
+
+  inline void log_a_match(size_t idx) {
+    ++v_[idx];
+  }
+
+  inline size_t get_match(size_t idx) {
+    return v_[idx]; 
+  }
+
+  bool all_matched() const {
+    for (auto& e : v_) {
+      if (e != count_to_)
+        return false;  
+    } 
+    return true;
+  }
+
+  std::string to_string() const {
+    return std::string(); //implement if needed
+  }
+private:
+  std::vector<size_t> v_;
+  size_t count_to_;
+};
+
+template<class T, class U = std::vector<T>, class V = bitvector<>>
 class erlang_pattern_matching {
 public:
-  using matched_list_t = std::vector<T>;
-  void foreach(const matched_list_t& match_list) {
-    match_list_ = match_list; 
-    init();
+  using matched_list_t = U;
+
+  template<class... Args>
+  void foreach(const matched_list_t* match_list, Args... args) {
+    match_list_ = match_list; // copy of pointer 
+    init(std::forward<Args>(args)...);
   }
 
-  void foreach(matched_list_t&& match_list) {
-    match_list_ = std::move(match_list); 
-    init();
+  template<class... Args>
+  void foreach(const matched_list_t& match_list, Args... args) {
+    match_list_ = match_list; // copy of data
+    init(std::forward<Args>(args)...);
   }
 
+  template<class... Args>
+  void foreach(matched_list_t&& match_list, Args... args) {
+    match_list_= std::move(match_list); // move of data
+    init(std::forward<Args>(args)...);
+  }
+    
   bool match(const T& t) {
     if (failure_) 
       return false;
@@ -94,25 +135,27 @@ public:
     // same as the match list, so if more than the half of matches ore done
     // we start searching for matches from the end of the mathc list
     size_t idx;
-    if (recv_count < match_list_.size() / 2) {
-      auto it = std::find(begin(match_list_), end(match_list_), t);
-      if (it == end(match_list_)) {
+    if (recv_count < r(match_list_).size() / 2) {
+      auto it = std::find(begin(r(match_list_)), end(r(match_list_)), t);
+      if (it == end(r(match_list_))) {
         failure_ = true;
         return false;
       }
-      idx = std::distance(begin(match_list_), it);
+      idx = std::distance(begin(r(match_list_)), it);
     } else {
-      auto it = std::find(match_list_.rbegin(), match_list_.rend(), t);
-      if (it == match_list_.rend()) {
+      auto it = std::find(r(match_list_).rbegin(), r(match_list_).rend(), t);
+      if (it == match_list().rend()) {
         failure_ = true;
         return false;
       }
-      idx = match_list_.size() - 1 - std::distance(match_list_.rbegin(), it);
+      idx =
+        match_list().size() - 1 - std::distance(r(match_list_).rbegin(), it);
     }
-    matches_.set(idx, true);
+    matches_.log_a_match(idx);
     ++recv_count; 
-    if (recv_count == match_list_.size()) {
-      if(matches_.all_set()) {
+    if (recv_count == r(match_list_).size()) {
+      if(matches_.all_matched()) {
+        failure_ = true; // prevents from further false matches
         matched_ = true;
       } else {
         failure_ = true;
@@ -124,19 +167,42 @@ public:
   inline bool matched() const {
     return matched_; 
   }
+
+  inline void restart() {
+    init(); 
+  }
+
+  inline const matched_list_t& match_list() const {
+    return match_list_;
+  }
+
+  inline matched_list_t& match_list() {
+    return match_list_;
+  }
 private:
-  void init() {
-    matches_ = bitvector<>(match_list_.size(), false);
+  template<class... Args>
+  void init(Args... args) {
+    matches_ = V(r(match_list_).size(), std::forward<Args>(args)...);
     recv_count = 0;
     matched_ = false;
     failure_ = false;
   }
 
-  bitvector<> matches_;
+  template<class X>
+  inline const X& r(X& obj) const {
+    return obj;
+  }
+
+  template<class X>
+  inline const X& r(const X* obj) const {
+    return *obj;
+  }
+
+  V matches_;
   matched_list_t match_list_;
   size_t recv_count = 0;
   bool matched_ = false;
-  bool failure_ = false;
+  bool failure_ = true;
 };
 
 #endif // ERLANG_PATTERN_MATCHING_HPP

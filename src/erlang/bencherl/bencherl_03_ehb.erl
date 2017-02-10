@@ -77,7 +77,9 @@ sender(Rs, Loop) ->
 	lists:foreach(fun (R) -> R ! ?DATA end, Rs),
 	sender(Rs, Loop-1).
 
-sender_ack(Rs, 2) ->
+% typo??? changed from 2 to 1
+%sender_ack(Rs, 2) ->
+sender_ack(Rs, 1) ->
 	lists:foreach(fun (R) ->
 			R ! ?DATA,
 			R ! {self(), are_you_keeping_up}
