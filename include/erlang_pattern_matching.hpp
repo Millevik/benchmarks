@@ -6,7 +6,7 @@
 #include <sstream>
 
 template<class T = uint64_t>
-class bitvector {
+class match_marker {
 public:
   using wrapper_type = T;
   static const size_t num_wrapper_bits = sizeof(wrapper_type) * 8;
@@ -14,13 +14,13 @@ public:
   static const wrapper_type empty_value = static_cast<wrapper_type>(0);
   static const wrapper_type one_value = static_cast<wrapper_type>(1);
 
-  bitvector() = default;
-  bitvector(const bitvector&) = default;
-  bitvector(bitvector&&) = default;
-  bitvector& operator = (bitvector&&) = default;
-  bitvector& operator = (const bitvector&) = default;
+  match_marker() = default;
+  match_marker(const match_marker&) = default;
+  match_marker(match_marker&&) = default;
+  match_marker& operator = (match_marker&&) = default;
+  match_marker& operator = (const match_marker&) = default;
 
-  bitvector(size_t num_bits)
+  match_marker(size_t num_bits)
       : v_(get_block_idx(num_bits - 1) + 1, empty_value) 
       , num_bits_(num_bits)
       , padding_mask_(full_value << (num_bits % num_wrapper_bits))
@@ -68,15 +68,15 @@ private:
   wrapper_type padding_mask_;
 };
 
-class vector_counter {
+class match_counter {
 public:
-  vector_counter() = default;
-  vector_counter(const vector_counter&) = default;
-  vector_counter(vector_counter&&) = default;
-  vector_counter& operator = (vector_counter&&) = default;
-  vector_counter& operator = (const vector_counter&) = default;
+  match_counter() = default;
+  match_counter(const match_counter&) = default;
+  match_counter(match_counter&&) = default;
+  match_counter& operator = (match_counter&&) = default;
+  match_counter& operator = (const match_counter&) = default;
 
-  vector_counter(size_t num_matches, size_t count_to)
+  match_counter(size_t num_matches, size_t count_to)
       : v_(num_matches, 0)
       , count_to_(count_to)
   { } 
@@ -105,7 +105,7 @@ private:
   size_t count_to_;
 };
 
-template<class T, class U = std::vector<T>, class V = bitvector<>>
+template<class T, class U = std::vector<T>, class V = match_marker<>>
 class erlang_pattern_matching {
 public:
   using matched_list_t = U;
