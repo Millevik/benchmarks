@@ -45,6 +45,7 @@ struct client_state {
  size_t n;
  actor serv;
  actor pid;
+ bool test = true;
 };
 
 void client_impl(stateful_actor<client_state>* self, proc_call_atom calltype);
@@ -53,7 +54,7 @@ void client_call(stateful_actor<client_state>* self, proc_call_atom calltype,
 void client(stateful_actor<client_state>* self, proc_call_atom calltype,
             actor serv, size_t n, actor pid);
 
-behavior clientx(stateful_actor<client_state>* self, size_t cqueue) {
+behavior client(stateful_actor<client_state>* self, size_t cqueue) {
   self->set_default_handler(skip);
 	//[self() ! dont_match_me || _ <- lists:seq(1, Queue)],
 	//client().
@@ -94,9 +95,12 @@ void client_call(stateful_actor<client_state>* self, proc_call_atom calltype,
                  actor s, stress_atom msg) {
   //client_call({proc_call,S}, Msg) -> S ! {self(), Msg}, receive {S,Ans} -> Ans end.
   self->send(s, msg);
+  if (self->state.test) {
+    self->state.test = false,
   self->become([=] (stress_atom) {
     client_impl(self, calltype);     
   });
+  }
 }
 
 behavior server(event_based_actor* self) {
@@ -126,10 +130,10 @@ erlang_pattern_matching<actor> start_clients(actor_system& system, size_t np, si
   erlang_pattern_matching<actor> result; 
   for (size_t i = 0; i < np; ++i) {
     //client overload resolution problem
-    result.match_list().emplace_back(system.spawn(clientx, cqueue)); 
-    //result.match_list().emplace_back(system.spawn([=](stateful_actor<client_state>* self) {
-      //return client(self, cqueue);
-    //}));
+    //result.match_list().emplace_back(system.spawn(client, cqueue)); 
+    result.match_list().emplace_back(system.spawn([=](stateful_actor<client_state>* self) {
+      return client(self, cqueue);
+    }));
   } 
   return result;
 }
