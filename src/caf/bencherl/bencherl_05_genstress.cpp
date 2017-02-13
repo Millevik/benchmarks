@@ -53,7 +53,7 @@ void client_call(stateful_actor<client_state>* self, proc_call_atom calltype,
 void client(stateful_actor<client_state>* self, proc_call_atom calltype,
             actor serv, size_t n, actor pid);
 
-behavior client(stateful_actor<client_state>* self, size_t cqueue) {
+behavior clientx(stateful_actor<client_state>* self, size_t cqueue) {
   self->set_default_handler(skip);
 	//[self() ! dont_match_me || _ <- lists:seq(1, Queue)],
 	//client().
@@ -126,10 +126,10 @@ erlang_pattern_matching<actor> start_clients(actor_system& system, size_t np, si
   erlang_pattern_matching<actor> result; 
   for (size_t i = 0; i < np; ++i) {
     //client overload resolution problem
-    //result.match_list().emplace_back(system.spawn(client, cqueue)); 
-    result.match_list().emplace_back(system.spawn([=](stateful_actor<client_state>* self) {
-      return client(self, cqueue);
-    }));
+    result.match_list().emplace_back(system.spawn(clientx, cqueue)); 
+    //result.match_list().emplace_back(system.spawn([=](stateful_actor<client_state>* self) {
+      //return client(self, cqueue);
+    //}));
   } 
   return result;
 }
