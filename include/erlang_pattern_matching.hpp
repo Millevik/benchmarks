@@ -179,6 +179,10 @@ public:
   inline matched_list_t& match_list() {
     return match_list_;
   }
+
+  inline std::string to_string() const {
+    return matches_.to_string();
+  }
 private:
   template<class... Args>
   void init(Args... args) {

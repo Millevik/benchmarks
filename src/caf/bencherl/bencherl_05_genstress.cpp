@@ -45,7 +45,6 @@ struct client_state {
  size_t n;
  actor serv;
  actor pid;
- bool test = true;
 };
 
 void client_impl(stateful_actor<client_state>* self, proc_call_atom calltype);
@@ -95,12 +94,9 @@ void client_call(stateful_actor<client_state>* self, proc_call_atom calltype,
                  actor s, stress_atom msg) {
   //client_call({proc_call,S}, Msg) -> S ! {self(), Msg}, receive {S,Ans} -> Ans end.
   self->send(s, msg);
-  if (self->state.test) {
-    self->state.test = false,
   self->become([=] (stress_atom) {
     client_impl(self, calltype);     
   });
-  }
 }
 
 behavior server(event_based_actor* self) {
@@ -162,7 +158,7 @@ void run(actor_system& system, proc_call_atom type, size_t np, size_t n, size_t 
 }
 
 void usage() {
-  cout << "usage: bencherl_03_ehb VERSION NUM_CORES" << endl
+  cout << "usage: bencherl_05_genstress VERSION NUM_CORES" << endl
        << "       VERSION:      short|intermediate|long " << endl
        << "       NUM_CORES:    number of cores" << endl << endl
        << "  for details see http://release.softlab.ntua.gr/bencherl/" << endl;
