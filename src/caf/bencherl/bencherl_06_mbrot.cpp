@@ -40,7 +40,10 @@ static constexpr double lim_sqr = 4.0;
 static constexpr double rl = 2.0;
 static constexpr double il = 2.0;
 
-int mbrot(double x0, double y0, double x1, double y1, int i) {
+// avoids unwanted compiler optimization (slows down the bench)
+static volatile int* avoid_opt; 
+
+void mbrot(double x0, double y0, double x1, double y1, int i) {
   //mbrot(X0, Y0, X1, Y1, I) when I < ?MAXITER, (X1*X1 + Y1*Y1) =< ?LIM_SQR ->
     //X2 = X1*X1 - Y1*Y1 + X0,
     //Y2 = 2*X1*Y1 + Y0,
@@ -51,19 +54,20 @@ int mbrot(double x0, double y0, double x1, double y1, int i) {
   // to 
   if (i < maxiter && (x1*x1 + y1*y1) <= lim_sqr) {
   } else {
-    return x1; // random result 
+    *avoid_opt += *avoid_opt;
+    return;
   }
   double x2 = x1 * x1 - y1 * y1 + x0;
   double y2 = 2 * x1 * y1 + y0;
-  return mbrot(x0, y0, x2, y2, i + 1); // tail recursive
+  mbrot(x0, y0, x2, y2, i + 1); // tail recursive
 }
 
-int mbrot(double x, double y) {
+void mbrot(double x, double y) {
   //mbrot(X,Y) -> mbrot(X,Y,X,Y,0).
-  return mbrot(x, y, x, y, 0);
+  mbrot(x, y, x, y, 0);
 }
 
-int cols(size_t w, size_t h, size_t wi, size_t hi) {
+void cols(size_t w, size_t h, size_t wi, size_t hi) {
   //cols(W, H, Wi, Hi) when Wi > 0 ->
     //%% transform X and Y pixel to mandelbrot coordinates
     //X = (Wi - 1)/W*(2*?RL) - ?RL,
@@ -74,43 +78,43 @@ int cols(size_t w, size_t h, size_t wi, size_t hi) {
   //cols(_, _, 0, _) -> ok.
   if (wi > 0) {
   } else {
-    return wi; // random result 
+    return;
   }
   double x = (wi -1)/w*(2*rl) -rl; 
   double y = (hi - 1)/h*(2*il) - il;
-  int tmp = mbrot(x, y);
-  return tmp + cols(w, h, wi -1, hi); // tail recursieve
+  mbrot(x, y);
+  cols(w, h, wi -1, hi); // tail recursieve
 }
 
-inline int cols(size_t w, size_t h, size_t hi) {
+inline void cols(size_t w, size_t h, size_t hi) {
   //cols(W, H, Hi) -> cols(W, H, W, Hi).
-  return cols(w,h,w,hi);
+  cols(w,h,w,hi);
 }
 
-int rows(size_t w, size_t h, size_t hi) {
+void rows(size_t w, size_t h, size_t hi) {
   //rows(W, H, Hi) when Hi > 0->
     //cols(W, H, Hi),
     //rows(W, H, Hi - 1);
   //rows(_, _, 0) -> ok.
   if (hi > 0) {
   } else {
-    return hi; //random result
+    return;
   }
-  int tmp = cols(w, h, hi);
-  return tmp + rows(w, h, hi -1); // tail recursive
+  cols(w, h, hi);
+  rows(w, h, hi -1); // tail recursive
 }
 
-inline int rows(size_t w, size_t h) {
+inline void rows(size_t w, size_t h) {
   //rows(W,H) -> rows(W, H, H).
-  return rows(w, h, h);
+  rows(w, h, h);
 }
 
 void worker(event_based_actor* self, size_t n, actor parent) {
   //worker(N, Parent) ->
     //rows(N, N),
     //Parent ! {self(), done}.
-  int tmp = rows(n,n); //is always true, but the compiler should not know
-  self->send(parent, done_atom::value, tmp);
+  rows(n,n);
+  self->send(parent, done_atom::value);
 }
 
 void receive_workers(scoped_actor& self, erlang_pattern_matching<actor>&& pids) {
@@ -118,7 +122,7 @@ void receive_workers(scoped_actor& self, erlang_pattern_matching<actor>&& pids) 
   //receive_workers([Pid|Pids]) -> receive {Pid, done} -> receive_workers(Pids) end.
   pids.restart();
   while(!pids.matched()) {
-    self->receive([&](done_atom, int) { // with int we avoid optimizations
+    self->receive([&](done_atom) {
       pids.match(actor_cast<actor>(self->current_sender()));
     });
   }
@@ -175,6 +179,7 @@ int main(int argc, char** argv) {
     std::cerr << "version musst be short, intermediate or long" << std::endl;
     exit(1);
   }
+  avoid_opt = new int(1);
   int cores = std::stoi(argv[2]);
   actor_system_config cfg;
   cfg.parse(argc, argv, "caf-application.ini");
