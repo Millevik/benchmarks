@@ -42,7 +42,7 @@ using gens_t = vector<actor>;
   }
 
 struct data_t {
-  vector<int> d;
+  vector<uint64_t> d;
 };
 
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(data_t);
