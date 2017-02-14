@@ -35,12 +35,6 @@ using stress_atom = atom_constant<atom("stress")>;
 using ok_atom = atom_constant<atom("ok")>;
 using dont_match_me_atom = atom_constant<atom("dontmatch")>;
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
 struct client_state {
  size_t n;
  actor serv;
