@@ -54,7 +54,9 @@ void mbrot(double x0, double y0, double x1, double y1, int i) {
   // to 
   if (i < maxiter && (x1*x1 + y1*y1) <= lim_sqr) {
   } else {
-    *avoid_opt += *avoid_opt;
+    if (y1 == 1.0) {
+      *avoid_opt += *avoid_opt;
+    }
     return;
   }
   double x2 = x1 * x1 - y1 * y1 + x0;
