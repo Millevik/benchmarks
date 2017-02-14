@@ -74,7 +74,7 @@ behavior dispatcher(event_based_actor* self, actor master) {
         self->quit(); 
       }
     },
-    [=] (actor to, data_t data) {
+    [=] (actor to, data_t& data) {
       self->send(to, actor_cast<actor>(self->current_sender()) , move(data));
     }
   };
