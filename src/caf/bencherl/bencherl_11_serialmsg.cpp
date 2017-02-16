@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *                       ____    _    _____                                   *
  *                      / ___|  / \  |  ___|    C++                           *
@@ -56,7 +55,7 @@ behavior receiver(event_based_actor* self, actor master) {
     [=] (done_atom done) {
       self->send(master, done);
     },
-    [=] (actor /*pid*/, const data_t&) {
+    [=] (actor /*pid*/, data_t&) {
     
     }
   };
@@ -75,7 +74,7 @@ behavior dispatcher(event_based_actor* self, actor master) {
       }
     },
     [=] (actor to, data_t& data) {
-      self->send(to, actor_cast<actor>(self->current_sender()) , move(data));
+      self->send(to, actor_cast<actor>(self->current_sender()), move(data));
     }
   };
 }
@@ -140,6 +139,7 @@ gens_t setup_generators(scoped_actor& self, recvs_t& recvs, actor disp, size_t n
   //setup_generators([Recv|Recvs], Disp, Pid, N, L, Out) ->
     //setup_generators(Recvs, Disp, Pid, N, L, [spawn_link(fun() -> generator(Recv, Disp, Pid, N, L) end) | Out]).
   gens_t out;
+  out.reserve(recvs.match_list().size());
   for (auto& recv : recvs.match_list()) {
     out.emplace_back(
       self->spawn(generator, recv, disp, actor_cast<actor>(self), n, l));

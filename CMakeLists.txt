@@ -259,6 +259,7 @@ if(NOT CAF_NO_ERLANG_BENCHMARKS)
   add_erlang_bencherl_benchmark(bencherl_08_parallel)
   add_erlang_bencherl_benchmark(bencherl_10_ran)
   add_erlang_bencherl_benchmark(bencherl_11_serialmsg)
+  add_erlang_bencherl_benchmark(bencherl_12_timer_wheel)
 
   add_custom_target(erlang_benchmarks
                     SOURCES ${CAF_ERLANG_SRC_FILES}
@@ -388,6 +389,7 @@ add_caf_bencherl_benchmark(bencherl_06_mbrot)
 add_caf_bencherl_benchmark(bencherl_08_parallel)
 add_caf_bencherl_benchmark(bencherl_10_ran)
 add_caf_bencherl_benchmark(bencherl_11_serialmsg)
+add_caf_bencherl_benchmark(bencherl_12_timer_wheel)
 
 set(CAF_COMPILED_BENCHES "caf ${CAF_COMPILED_BENCHES}")
 

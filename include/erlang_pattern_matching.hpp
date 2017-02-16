@@ -1,3 +1,22 @@
+/******************************************************************************
+ *                       ____    _    _____                                   *
+ *                      / ___|  / \  |  ___|    C++                           *
+ *                     | |     / _ \ | |_       Actor                         *
+ *                     | |___ / ___ \|  _|      Framework                     *
+ *                      \____/_/   \_|_|                                      *
+ *                                                                            *
+ * Copyright (C) 2011 - 2016                                                  *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
+ *                                                                            *
+ * Distributed under the terms and conditions of the BSD 3-Clause License or  *
+ * (at your option) under the terms and conditions of the Boost Software      *
+ * License 1.0. See accompanying files LICENSE and LICENSE_ALTERNATIVE.       *
+ *                                                                            *
+ * If you did not receive a copy of the license files, see                    *
+ * http://opensource.org/licenses/BSD-3-Clause and                            *
+ * http://www.boost.org/LICENSE_1_0.txt.                                      *
+ ******************************************************************************/
+
 #ifndef ERLANG_PATTERN_MATCHING_HPP
 #define ERLANG_PATTERN_MATCHING_HPP
 
@@ -21,7 +40,7 @@ public:
   match_marker& operator = (const match_marker&) = default;
 
   match_marker(size_t num_bits)
-      : v_(get_block_idx(num_bits - 1) + 1, empty_value) 
+      : v_(get_block_idx((num_bits == 0) ? 0 : (num_bits - 1)) + 1, empty_value) 
       , num_bits_(num_bits)
       , padding_mask_(full_value << (num_bits % num_wrapper_bits))
   { } 
@@ -124,7 +143,7 @@ public:
 
   template<class... Args>
   void foreach(matched_list_t&& match_list, Args... args) {
-    match_list_= std::move(match_list); // move of data
+    match_list_ = std::move(match_list); // move of data
     init(std::forward<Args>(args)...);
   }
     
@@ -188,7 +207,7 @@ private:
   void init(Args... args) {
     matches_ = V(r(match_list_).size(), std::forward<Args>(args)...);
     recv_count = 0;
-    matched_ = false;
+    matched_ = r(match_list_).size() == 0 ? true : false;
     failure_ = false;
   }
 
