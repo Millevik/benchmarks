@@ -28,10 +28,10 @@ template<class T = uint64_t>
 class match_marker {
 public:
   using wrapper_type = T;
-  static const size_t num_wrapper_bits = sizeof(wrapper_type) * 8;
-  static const wrapper_type full_value = ~static_cast<wrapper_type>(0);
-  static const wrapper_type empty_value = static_cast<wrapper_type>(0);
-  static const wrapper_type one_value = static_cast<wrapper_type>(1);
+  static constexpr size_t num_wrapper_bits = sizeof(wrapper_type) * 8;
+  static constexpr wrapper_type full_value = ~static_cast<wrapper_type>(0);
+  static constexpr wrapper_type empty_value = static_cast<wrapper_type>(0);
+  static constexpr wrapper_type one_value = static_cast<wrapper_type>(1);
 
   match_marker() = default;
   match_marker(const match_marker&) = default;
@@ -86,6 +86,15 @@ private:
   size_t num_bits_;
   wrapper_type padding_mask_;
 };
+
+template<class T> 
+constexpr size_t match_marker<T>::num_wrapper_bits;
+template<class T> 
+constexpr T match_marker<T>::full_value;
+template<class T> 
+constexpr T match_marker<T>::empty_value;
+template<class T> 
+constexpr T match_marker<T>::one_value;
 
 class match_counter {
 public:
