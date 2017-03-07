@@ -31,27 +31,34 @@ using pong_atom = atom_constant<atom("pong")>;
 
 behavior ping_actor(stateful_actor<int>* self, int count, actor pong) {
   self->state = count;
-  return {[=](start_atom) {
-            self->send(pong, ping_atom::value);
-            --self->state;
-          },
-          [=](ping_atom) {
-            self->send(pong, ping_atom::value);
-            --self->state;
-          },
-          [=](pong_atom) {
-            if (self->state > 0) {
-              self->send(self, ping_atom::value);
-            } else {
-              self->send(pong, stop_atom::value);
-              self->quit();
-            }
-          }};
+  return {
+    [=](start_atom) {
+        self->send(pong, ping_atom::value);
+        --self->state;
+      },
+      [=](ping_atom) {
+        self->send(pong, ping_atom::value);
+        --self->state;
+      },
+      [=](pong_atom) {
+        if (self->state > 0) {
+          self->send(self, ping_atom::value);
+        } else {
+          self->send(pong, stop_atom::value);
+          self->quit();
+        }
+    }};
 }
 
 behavior pong_actor(event_based_actor* self) {
-  return {[=](ping_atom) { return pong_atom::value; },
-          [=](stop_atom) { self->quit(); }};
+  return {
+    [=](ping_atom) { 
+      return pong_atom::value; 
+    },
+    [=](stop_atom) { 
+      self->quit(); 
+    }
+  };
 }
 
 class config : public actor_system_config {

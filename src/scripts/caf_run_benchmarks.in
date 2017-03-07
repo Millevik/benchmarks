@@ -11,6 +11,7 @@ RUN_CAF=false
 RUN_CHARM=false
 RUN_SCALA=false
 RUN_ERLANG=false
+RUN_OTHER=false
 
 # benchmark settings
 RUN_MIXED_CASE=false
@@ -22,6 +23,7 @@ CUSTOM_BENCH_NAME=""
 CUSTOM_BENCH_ARGS=""
 BENCH_REPETITIONS=10
 LABEL_SUFFIX=""
+OTHER_LABEL_NAME=""
 # CPU core settings
 MIN_CORES=$(lscpu | grep -E "^Socket\(s\)" | grep -oE "[0-9]+")
 MAX_CORES=$(lscpu | grep -E "^CPU\(s\)" | grep -oE "[0-9]+")
@@ -108,7 +110,13 @@ if [ "$DEFAULT_MODE" = true ]; then
             "charm") RUN_CHARM=true ;;
             "scala") RUN_SCALA=true ;;
             "erlang") RUN_ERLANG=true ;;
-            *) echo "unknown label argument \"$i\""; exit 0 ;;
+            *) if ! [[ $i =~ ^[a-zA-Z0-9-]+$ ]]; then
+                 echo "label <${optarg}> does not match regex ^[a-zA-Z0-9-]+$" 1>&2
+                 exit 1
+               else
+                 RUN_OTHER=true
+                 OTHER_LABEL_NAME=$i
+               fi
           esac
         done
         ;;
@@ -164,6 +172,7 @@ if [ "$DEFAULT_MODE" = true ]; then
   if $RUN_SCALA ; then LABEL_STR="scala $LABEL_STR" ; fi
   if $RUN_CHARM ; then LABEL_STR="charm $LABEL_STR" ; fi
   if $RUN_CAF ; then LABEL_STR="caf $LABEL_STR" ; fi
+  if $RUN_OTHER ; then LABEL_STR="$OTHER_LABEL_NAME $LABEL_STR" ; fi
 
   if $RUN_MIXED_CASE ; then BENCH_STR="mixed_case" $BENCH_STR ; fi
   if $RUN_ACTOR_CREATION ; then BENCH_STR="actor_creation $BENCH_STR" ; fi
