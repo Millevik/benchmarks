@@ -29,29 +29,33 @@ using retreive_atom = atom_constant<atom("retreive")>;
 using result_atom = atom_constant<atom("result")>;
 
 behavior produce_actor(event_based_actor* self, int count, actor counting) {
-  return {[=](increment_atom) {
-            for (int i = 0; i < count; ++i) {
-              self->send(counting, increment_atom::value);
-            }
-
-            self->send(counting, retreive_atom::value);
-          },
-          [=](result_atom, int result) {
-            if (result != count) {
-              cout << "ERROR: expected: " << count << ", found: " << result
-                   << endl;
-            } else {
-              cout << "SUCCESS! received: " << result << endl;
-            }
-          }};
+  return {
+    [=](increment_atom) {
+      for (int i = 0; i < count; ++i) {
+        self->send(counting, increment_atom::value);
+      }
+      self->send(counting, retreive_atom::value);
+    },
+    [=](result_atom, int result) {
+      if (result != count) {
+        cout << "ERROR: expected: " << count << ", found: " << result << endl;
+      } else {
+        cout << "SUCCESS! received: " << result << endl;
+      }
+    }
+  };
 }
 
 behavior counting_actor(stateful_actor<int>* self) {
   self->state = 0;
-  return {[=](increment_atom) { ++self->state; },
-          [=](retreive_atom) -> result<result_atom, int> {
-            return {result_atom::value, self->state};
-          }};
+  return {
+    [=](increment_atom) { 
+      ++self->state; 
+    },
+    [=](retreive_atom) -> result<result_atom, int> {
+      return {result_atom::value, self->state};
+    }
+  };
 }
 
 class config : public actor_system_config {

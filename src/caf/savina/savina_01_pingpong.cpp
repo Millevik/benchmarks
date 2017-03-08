@@ -47,7 +47,8 @@ behavior ping_actor(stateful_actor<int>* self, int count, actor pong) {
           self->send(pong, stop_atom::value);
           self->quit();
         }
-    }};
+    }
+  };
 }
 
 behavior pong_actor(stateful_actor<int>* self) {
