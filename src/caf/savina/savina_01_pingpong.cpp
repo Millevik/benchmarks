@@ -25,9 +25,9 @@ using namespace std;
 using namespace caf;
 
 using start_atom = atom_constant<atom("start")>;
-using stop_atom = atom_constant<atom("stop")>;
 using ping_atom = atom_constant<atom("ping")>;
 using pong_atom = atom_constant<atom("pong")>;
+using stop_atom = atom_constant<atom("stop")>;
 
 behavior ping_actor(stateful_actor<int>* self, int count, actor pong) {
   self->state = count;
@@ -50,9 +50,11 @@ behavior ping_actor(stateful_actor<int>* self, int count, actor pong) {
     }};
 }
 
-behavior pong_actor(event_based_actor* self) {
+behavior pong_actor(stateful_actor<int>* self) {
+  self->state = 0;
   return {
     [=](ping_atom) { 
+      ++self->state;
       return pong_atom::value; 
     },
     [=](stop_atom) { 
