@@ -66,7 +66,7 @@ public:
   int n = 40000;
 
   config() {
-    opt_group{custom_options_, "global"}.add(n, "n", "number of ping-pongs");
+    opt_group{custom_options_, "global"}.add(n, "num,n", "number of ping-pongs");
   }
 };
 

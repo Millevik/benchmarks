@@ -59,7 +59,7 @@ public:
   int n = 1e6;
 
   config() {
-    opt_group{custom_options_, "global"}.add(n, "n", "number of messages");
+    opt_group{custom_options_, "global"}.add(n, "num,n", "number of messages");
   }
 };
 
