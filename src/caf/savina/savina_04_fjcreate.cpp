@@ -58,7 +58,7 @@ public:
 
   config() {
     opt_group{custom_options_, "global"}
-    .add(n, "nnn,n", "???");
+    .add(n, "nnn,n", "num of actors");
   }
 };
 

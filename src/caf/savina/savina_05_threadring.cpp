@@ -31,55 +31,82 @@ using namespace caf;
   struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
   }
 
-void perform_computation(double theta) {
-  double sint = sin(theta);
-  double res = sint * sint;
-  if (res <= 0) {
-    throw string("Benchmark exited with unrealistic res value " + to_string(res));
+struct ping_message {
+  int pings_left;
+
+  bool has_next() {
+    return pings_left > 0; 
   }
-}
 
-struct message_t {
+  ping_message next() {
+    return ping_message{pings_left -1}; 
+  }
 };
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(message_t);
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ping_message);
 
-behavior throughput_actor(stateful_actor<int>* self, int total_msgs) {
-  self->state = 0;
+struct data_message {
+  actor data;  
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(data_message);
+
+struct exit_message {
+  int exits_left;
+  
+  bool has_next() {
+    return exits_left > 0; 
+  }
+
+  exit_message next() {
+    return exit_message{exits_left -1};
+  }
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(exit_message);
+
+behavior thread_ring_actor(stateful_actor<actor>* self, int /*id*/, int num_actors_in_ring) {
   return {
-    [=](message_t) {
-      ++self->state;
-      perform_computation(37.2);
-      if (self->state == total_msgs) {
-        self->quit(); 
+    [=](ping_message& pm) {
+      if (pm.has_next()) {
+        self->send(self->state, pm.next()); 
+      } else {
+        self->send(self->state, exit_message{num_actors_in_ring});
       }
+    },
+    [=](exit_message& em) {
+      if (em.has_next()) {
+        self->send(self->state, em.next()); 
+      }
+      self->quit();
+    },
+    [=](data_message& dm) {
+      self->state = dm.data;
     }
   };
 }
 
 class config : public actor_system_config {
 public:
-  int n = 10000;
-  int a = 60;
+  int n = 100;
+  int r = 100000;
 
   config() {
     opt_group{custom_options_, "global"}
-    .add(n, "nnn,n", "num of messages")
-    .add(a, "aaa,a", "num of actors");
+    .add(n, "nnn,n", "num of actors")
+    .add(n, "rrr,r", "num of pings");
   }
 };
 
 void caf_main(actor_system& system, const config& cfg) {
-  vector<actor> actors;
-  actors.reserve(cfg.a);
-  for (int i = 0; i< cfg.a; ++i) {
-    actors.emplace_back(system.spawn(throughput_actor, cfg.n));
+  auto num_actors_in_ring = cfg.n;
+  vector<actor> ring_actors;
+  ring_actors.reserve(num_actors_in_ring);
+  for (int i = 0; i < num_actors_in_ring; ++i) {
+    ring_actors.emplace_back(system.spawn(thread_ring_actor, i, num_actors_in_ring));
   }
-  message_t message;
-  for (int m = 0; m < cfg.n; ++m) {
-    for (auto& loop_actor: actors) {
-      anon_send(loop_actor, message);
-    }
+  for (size_t i = 0; i < ring_actors.size(); ++i) {
+    auto next_actor = ring_actors[(i + 1) % num_actors_in_ring] ;
+    anon_send(ring_actors[i], data_message{next_actor});
   }
+  anon_send(ring_actors[0], ping_message{cfg.r});
 }
 
 CAF_MAIN()
