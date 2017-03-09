@@ -43,43 +43,30 @@ struct message_t {
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(message_t);
 
-behavior throughput_actor(stateful_actor<int>* self, int total_msgs) {
-  self->state = 0;
+behavior fork_join_actor(event_based_actor* self) {
   return {
     [=](message_t) {
-      ++self->state;
       perform_computation(37.2);
-      if (self->state == total_msgs) {
-        self->quit(); 
-      }
+      self->quit(); 
     }
   };
 }
 
 class config : public actor_system_config {
 public:
-  int n = 10000;
-  int a = 60;
+  int n = 40000;
 
   config() {
     opt_group{custom_options_, "global"}
-    .add(n, "nnn,n", "num of messages")
-    .add(a, "aaa,a", "num of actors");
+    .add(n, "nnn,n", "???");
   }
 };
 
-
-
 void caf_main(actor_system& system, const config& cfg) {
-  vector<actor> actors;
-  for (int i = 0; i< cfg.a; ++i) {
-    actors.emplace_back(system.spawn(throughput_actor, cfg.n));
-  }
   message_t message;
-  for (int m = 0; m < cfg.n; ++m) {
-    for (auto& loop_actor: actors) {
-      anon_send(loop_actor, message);
-    }
+  for (int i = 0; i < cfg.n; ++i) {
+    auto fj_runner = system.spawn(fork_join_actor);
+    anon_send(fj_runner, message);
   }
 }
 
