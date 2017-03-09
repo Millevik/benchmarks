@@ -375,7 +375,7 @@ add_caf_benchmark(scheduling)
 
 add_caf_savina_benchmark(savina_01_pingpong)
 add_caf_savina_benchmark(savina_02_count)
-add_caf_savina_benchmark(savina_03_fjthrough)
+add_caf_savina_benchmark(savina_03_fjthrput)
 add_caf_savina_benchmark(savina_08_concdict)
 add_caf_savina_benchmark(savina_11_philosopher)
 add_caf_savina_benchmark(savina_28_nqueenk)
