@@ -94,21 +94,21 @@ struct chameneos_helper {
 
   struct meet_msg {
     color_t color;
-    actor sender;
+    //actor sender;
   };
 
   struct change_msg {
     color_t color;
-    actor sender;
+    //actor sender;
   };
 
   struct meeting_count_msg {
     int count;
-    actor sender;
+    //actor sender;
   };
 
   struct exit_msg {
-    actor sender ;
+    //actor sender;
   };
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(chameneos_helper::meet_msg);
@@ -120,7 +120,6 @@ class config : public actor_system_config {
 public:
   int num_chameneos = 100;
   int num_meetings = 200000;
-  
 
   config() {
     opt_group{custom_options_, "global"}
@@ -132,7 +131,6 @@ public:
 struct chameneos_chameneo_actor_state {
   int meetings;
   color_t color;
-  actor self;
 };
 
 behavior
@@ -141,30 +139,29 @@ chameneos_chameneo_actor(stateful_actor<chameneos_chameneo_actor_state>* self,
   auto& s = self->state;
   s.meetings = 0;
   s.color = color_;
-  s.self = actor_cast<actor>(self);
-  self->send(mall, chameneos_helper::meet_msg{s.color, s.self});
+  self->send(mall, chameneos_helper::meet_msg{s.color});
   return  {
     [=](chameneos_helper::meet_msg& msg) {
       auto& s = self->state;
       auto other_color = msg.color; 
-      auto& sender = msg.sender;
+      auto sender = actor_cast<actor>(self->current_sender());
       s.color = chameneos_helper::complement(s.color, other_color);
       ++s.meetings;
-      self->send(sender, chameneos_helper::change_msg{s.color, s.self});
-      self->send(mall, chameneos_helper::meet_msg{s.color, s.self});
+      self->send(sender, chameneos_helper::change_msg{s.color});
+      self->send(mall, chameneos_helper::meet_msg{s.color});
     },
     [=](chameneos_helper::change_msg& msg) {
       auto& s = self->state;
       s.color = msg.color;
       ++s.meetings;
-      self->send(mall, chameneos_helper::meet_msg{s.color, s.self});
+      self->send(mall, chameneos_helper::meet_msg{s.color});
     },
-    [=](chameneos_helper::exit_msg& msg) {
+    [=](chameneos_helper::exit_msg& /*msg*/) {
       auto& s = self->state;
-      auto& sender = msg.sender;
+      auto sender = actor_cast<actor>(self->current_sender());
       s.color = chameneos_helper::faded_color();
       self->send(sender,
-                 chameneos_helper::meeting_count_msg{s.meetings, s.self});
+                 chameneos_helper::meeting_count_msg{s.meetings});
       self->quit();
     }
   };
@@ -175,18 +172,17 @@ struct chameneos_mall_actor_state {
   int sum_meetings;
   int num_faded;
   int n;
-  actor self;
 };
 
 behavior chameneos_mall_actor(stateful_actor<chameneos_mall_actor_state>* self,
                               int n_, int num_chameneos) {
   auto& s = self->state;
   s.n = n_;
-  s.self = actor_cast<actor>(self);
+  auto actor_self = actor_cast<actor>(self);
   //start_chameneos
   for (int i = 0; i < num_chameneos; ++i) {
     auto color = static_cast<color_t>(i % 3);
-    auto loop_chamenos = self->spawn(chameneos_chameneo_actor, s.self, color, i);
+    auto loop_chamenos = self->spawn(chameneos_chameneo_actor, actor_self, color, i);
   }
   return {
     [=](chameneos_helper::meeting_count_msg& msg) {
@@ -201,14 +197,14 @@ behavior chameneos_mall_actor(stateful_actor<chameneos_mall_actor_state>* self,
       auto& s = self->state; 
       if (s.n > 0) {
         if (!s.waiting_chameneo) {
-          s.waiting_chameneo = msg.sender;
+          s.waiting_chameneo = actor_cast<actor>(self->current_sender());
         } else {
           --s.n;
           self->send(s.waiting_chameneo, msg);
           destroy(s.waiting_chameneo);
         } 
       } else {
-        self->send(msg.sender, chameneos_helper::exit_msg{s.self});
+        self->send(actor_cast<actor>(self->current_sender()), chameneos_helper::exit_msg{});
       }
     } 
   };
