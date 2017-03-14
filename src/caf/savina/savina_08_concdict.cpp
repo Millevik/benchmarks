@@ -133,7 +133,7 @@ behavior master_fun(event_based_actor* self, int num_workers, int num_msgs_per_w
   for (int i = 0; i < num_workers; ++i) {
     workers.emplace_back(self->spawn(worker_fun, actor_cast<actor>(self),
                                      dictionary, i, num_msgs_per_worker));
-    self->send(workers[i], do_work_msg{});
+    self->send(workers[i], do_work_msg());
   }
   int num_worker_terminated = 0;
   return {
