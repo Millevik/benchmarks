@@ -50,10 +50,9 @@ struct result_msg {
   //actor sender
   int key;
 };
-using do_work_msg = result_msg;
+static constexpr auto do_work_msg = result_msg{-1};
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(result_msg);
 
-//using do_work_msg_atom = atom_constant<atom("dowork")>;
 using end_work_msg_atom = atom_constant<atom("endwork")>;
 
 class config : public actor_system_config {
@@ -133,7 +132,7 @@ behavior master_fun(event_based_actor* self, int num_workers, int num_msgs_per_w
   for (int i = 0; i < num_workers; ++i) {
     workers.emplace_back(self->spawn(worker_fun, actor_cast<actor>(self),
                                      dictionary, i, num_msgs_per_worker));
-    self->send(workers[i], do_work_msg());
+    self->send(workers[i], do_work_msg);
   }
   int num_worker_terminated = 0;
   return {
