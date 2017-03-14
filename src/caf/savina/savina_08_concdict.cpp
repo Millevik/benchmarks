@@ -50,7 +50,7 @@ struct result_msg {
   //actor sender
   int key;
 };
-static constexpr auto do_work_msg = result_msg{-1};
+constexpr auto do_work_msg = result_msg{-1};
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(result_msg);
 
 using end_work_msg_atom = atom_constant<atom("endwork")>;
