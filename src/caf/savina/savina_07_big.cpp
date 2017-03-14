@@ -42,15 +42,12 @@ struct pong_msg {
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(pong_msg);
 
-struct exit_msg_big {
-  // nop
-};
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(exit_msg_big);
-
 struct neighbor_msg {
   vector<actor> neighbors;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(neighbor_msg);
+
+using exit_msg_atom = atom_constant<atom("exit")>;
 
 struct sink_actor_state {
   int num_messages;
@@ -61,12 +58,12 @@ behavior sink_actor_fun(stateful_actor<sink_actor_state>* self,
                         int num_workers) {
   self->state.num_messages = 0;
   return  {
-    [=](exit_msg_big&) {
+    [=](exit_msg_atom) {
       auto& s = self->state;
       ++s.num_messages;
       if (s.num_messages == num_workers) {
         for (auto& loop_worker : s.neighbors) {
-          self->send(loop_worker, exit_msg_big{});
+          self->send(loop_worker, exit_msg_atom::value);
           self->quit();
         }
       }
@@ -80,7 +77,7 @@ behavior sink_actor_fun(stateful_actor<sink_actor_state>* self,
 struct big_actor_state {
   int num_pings;
   int exp_pinger;
-  std::mt19937 random;
+  std::default_random_engine random;
   vector<actor> neighbors;
   ping_msg my_ping_msg;
   pong_msg my_pong_msg;
@@ -116,13 +113,13 @@ behavior big_actor_fun(stateful_actor<big_actor_state>* self, int id,
              << ", but received ping from " << pm.sender << endl;
       } 
       if (s.num_pings  == num_messages) {
-        self->send(sink_actor, exit_msg_big{});
+        self->send(sink_actor, exit_msg_atom::value);
       } else {
         send_ping();
         ++s.num_pings;
       }
     },
-    [=](exit_msg_big&) {
+    [=](exit_msg_atom) {
       self->quit();
     },
     [=](neighbor_msg& nm) {
