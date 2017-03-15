@@ -210,7 +210,6 @@ behavior chameneos_mall_actor(stateful_actor<chameneos_mall_actor_state>* self,
   };
 }
 
-
 void caf_main(actor_system& system, const config& cfg) {
   auto mall_actor =
     system.spawn(chameneos_mall_actor, cfg.num_meetings, cfg.num_chameneos);
