@@ -49,13 +49,6 @@ public:
     .add(num_msgs_per_worker, "mmm,m", "number of messges per worker")
     .add(write_percentage, "www,w", "write percent")
     .add(size_percentage, "sss,s", "size percentage");
-
-    if (write_percentage >= 50) {
-      throw "Write rate must be less than 50!";
-    }
-    if ((2 * write_percentage + size_percentage) >= 100) {
-      throw "(2 * write-rate) + sum-rate must be less than 100!";
-    }
   }
 };
 int config::write_percentage = 10;
@@ -272,6 +265,14 @@ behavior master_fun(event_based_actor* self, int num_workers,
 }
 
 void caf_main(actor_system& system, const config& cfg) {
+    if (cfg.write_percentage >= 50) {
+      cerr << "Write rate must be less than 50!" << endl;
+      exit(0);
+    }
+    if ((2 * cfg.write_percentage + cfg.size_percentage) >= 100) {
+      cerr << "(2 * write-rate) + sum-rate must be less than 100!" << endl;
+      exit(0);
+    }
   auto num_workers = cfg.num_entitites;
   auto num_msgs_per_worker = cfg.num_msgs_per_worker;
   auto master = system.spawn(master_fun, num_workers, num_msgs_per_worker);

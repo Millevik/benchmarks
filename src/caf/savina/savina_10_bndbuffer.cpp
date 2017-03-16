@@ -51,7 +51,7 @@ public:
     .add(num_consumers, "ccc,c", "number of consumers")
     .add(prod_cost, "xxx,x", "producer cost")
     .add(cons_cost, "yyy,y", "consumer cost")
-    .add(num_items_per_producer, "iii,i", "numer of items per producer")
+    .add(num_items_per_producer, "iii,i", "number of items per producer")
     .add(num_mailboxes, "nm", "number of mailboxes");
   }
 };
@@ -235,6 +235,10 @@ behavior manager_actor(stateful_actor<manager_actor_state>* self, int buffer_siz
 }
 
 void caf_main(actor_system& system, const config& cfg) {
+  if (cfg.buffer_size <= cfg.num_producers) {
+    cerr << "buffer_size must be larger than num_producers" << endl;
+    exit(0);
+  }
   actor manager =
     system.spawn(manager_actor, cfg.buffer_size, cfg.num_producers,
                  cfg.num_consumers, cfg.num_items_per_producer);
