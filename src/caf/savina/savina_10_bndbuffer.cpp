@@ -46,13 +46,13 @@ public:
   
   config() {
     opt_group{custom_options_, "global"}
-    .add(buffer_size, "bb", "buffer size")
-    .add(num_producers, "np", "number of producers")
-    .add(num_consumers, "nc", "number of consumers")
-    .add(prod_cost, "pc", "producer cost")
-    .add(cons_cost, "cc", "consumer cost")
-    .add(num_items_per_producer, "ipp", "numer of items per producer")
-    .add(num_mailboxes, "nm", "numer of mailboxes");
+    .add(buffer_size, "b", "buffer size")
+    .add(num_producers, "p", "number of producers")
+    .add(num_consumers, "c", "number of consumers")
+    .add(prod_cost, "x", "producer cost")
+    .add(cons_cost, "y", "consumer cost")
+    .add(num_items_per_producer, "i", "numer of items per producer")
+    .add(num_mailboxes, "nm", "number of mailboxes");
   }
 };
 int config::prod_cost = 25;
