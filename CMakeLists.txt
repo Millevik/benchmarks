@@ -382,6 +382,7 @@ add_caf_savina_benchmark(savina_06_chameneos)
 add_caf_savina_benchmark(savina_07_big)
 add_caf_savina_benchmark(savina_08_concdict)
 add_caf_savina_benchmark(savina_09_concsll)
+add_caf_savina_benchmark(savina_10_bndbuffer)
 add_caf_savina_benchmark(savina_11_philosopher)
 add_caf_savina_benchmark(savina_28_nqueenk)
 
