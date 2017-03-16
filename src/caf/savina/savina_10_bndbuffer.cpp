@@ -46,12 +46,12 @@ public:
   
   config() {
     opt_group{custom_options_, "global"}
-    .add(buffer_size, "b", "buffer size")
-    .add(num_producers, "p", "number of producers")
-    .add(num_consumers, "c", "number of consumers")
-    .add(prod_cost, "x", "producer cost")
-    .add(cons_cost, "y", "consumer cost")
-    .add(num_items_per_producer, "i", "numer of items per producer")
+    .add(buffer_size, "bbb,b", "buffer size")
+    .add(num_producers, "ppp,p", "number of producers")
+    .add(num_consumers, "ccc,c", "number of consumers")
+    .add(prod_cost, "xxx,x", "producer cost")
+    .add(cons_cost, "yyy,y", "consumer cost")
+    .add(num_items_per_producer, "iii,i", "numer of items per producer")
     .add(num_mailboxes, "nm", "number of mailboxes");
   }
 };
