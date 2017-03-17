@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <vector>
+#include <atomic>
 
 #include "caf/all.hpp"
 
@@ -34,94 +35,104 @@ using denied_atom = atom_constant<atom("denied")>;
 
 class config : public actor_system_config {
 public:
-  int num_philosophers = 20;
-  int num_eating_rounds = 10000;
-  int num_channels = 1;
+  int n = 20;
+  int m = 10000;
 
   config() {
     opt_group{custom_options_, "global"}
-      .add(num_philosophers, "philosophers", "number of philosophers")
-      .add(num_eating_rounds, "rounds", "number of eating rounds")
-      .add(num_channels, "channles", "number of channels");
+      .add(n, "nnn,n", "number of philosophers")
+      .add(m, "mmm,m", "number of eating rounds");
   }
 };
 
 struct philosopher_states {
   long local_counter = 0;
-  long counter = 0;
   int rounds_so_far = 0;
 };
 
 behavior philosopher_actor(stateful_actor<philosopher_states>* self, int id,
-                           actor arbitrator, strong_actor_ptr result,
-                           const config* cfg) {
-  return {[=](denied_atom) {
-            ++self->state.local_counter;
-            self->send(arbitrator, hungry_atom::value, id);
-          },
-          [=](eat_atom) {
-            ++self->state.rounds_so_far;
-            self->state.counter += self->state.local_counter;
-            self->send(arbitrator, done_atom::value, id);
-            if (self->state.rounds_so_far < cfg->num_eating_rounds) {
-              self->send(self, start_atom::value);
-            } else {
-              self->send(arbitrator, exit_atom::value);
-              self->send(actor_cast<actor>(result), self->state.counter);
-              // self->quit()
-            }
-          },
-          [=](start_atom) { self->send(arbitrator, hungry_atom::value, id); }};
+                           int rounds, atomic_long* counter, actor arbitrator) {
+  return {
+    [=](denied_atom) {
+      auto& s = self->state;
+      ++s.local_counter;
+      self->send(arbitrator, hungry_atom::value, id);
+    },
+    [=](eat_atom) {
+      auto& s = self->state;
+      ++s.rounds_so_far;
+      counter->fetch_add(s.local_counter);
+      self->send(arbitrator, done_atom::value, id);
+      if (s.rounds_so_far < rounds) {
+        self->send(self, start_atom::value);
+      } else {
+        self->send(arbitrator, exit_atom::value);
+        self->quit();
+      }
+    },
+    [=](start_atom) { 
+      self->send(arbitrator, hungry_atom::value, id); 
+    }
+  };
 }
 
-behavior arbitrator_actor(stateful_actor<vector<int>>* self,
-                          const config* cfg) {
-  self->state.reserve(cfg->num_philosophers);
-  for (int i = 0; i < cfg->num_philosophers; ++i) {
-    self->state.emplace_back(0); // fork not used
-  }
+struct arbitrator_actor_state {
+  vector<bool> forks;
   int num_exit_philosophers = 0;
-  return {[=](hungry_atom, int id) {
-            int& left_fork = self->state[id];
-            int& right_fork = self->state[(id + 1) % self->state.size()];
+};
 
-            if (left_fork || right_fork) {
-              self->send(actor_cast<actor>(self->current_sender()),
-                         denied_atom::value);
-            } else {
-              left_fork = 1;
-              right_fork = 1;
-              self->send(actor_cast<actor>(self->current_sender()),
-                         eat_atom::value);
-            }
-          },
-          [=](done_atom, int id) {
-            int& left_fork = self->state[id];
-            int& right_fork = self->state[(id + 1) % self->state.size()];
-            left_fork = 0;
-            right_fork = 0;
-          },
-          [=](exit_atom) mutable {
-            ++num_exit_philosophers;
-            if (cfg->num_philosophers == num_exit_philosophers) {
-              // self->quit()
-            }
-          }};
+behavior arbitrator_actor(stateful_actor<arbitrator_actor_state>* self,
+                          int num_forks) {
+  auto& s = self->state;
+  s.forks.reserve(num_forks);
+  for (int i = 0; i < num_forks; ++i) {
+    s.forks.emplace_back(false); // fork not used
+  }
+  return {
+    [=](hungry_atom, int philosopher_id) {
+      auto& s = self->state;
+      auto left_fork = philosopher_id;
+      auto right_fork = (philosopher_id + 1) % s.forks.size();
+      if (s.forks[left_fork] || s.forks[right_fork]) {
+        self->send(actor_cast<actor>(self->current_sender()),
+                   denied_atom::value);
+      } else {
+        s.forks[left_fork] = true;
+        s.forks[right_fork] = true;
+        self->send(actor_cast<actor>(self->current_sender()),
+                   eat_atom::value);
+      }
+    },
+    [=](done_atom, int philosopher_id) {
+      auto& s = self->state;
+      auto left_fork = philosopher_id;
+      auto right_fork = (philosopher_id + 1) % s.forks.size();
+      s.forks[left_fork] = false;
+      s.forks[right_fork] = false;
+    },
+    [=](exit_atom) {
+      auto& s = self->state;
+      ++s.num_exit_philosophers;
+      if (num_forks == s.num_exit_philosophers) {
+        self->quit();
+      }
+    }
+  };
 }
 
 void caf_main(actor_system& system, const config& cfg) {
-  auto arbitrator = system.spawn(arbitrator_actor, &cfg);
-  scoped_actor self{system};
-  for (int i = 0; i < cfg.num_philosophers; ++i) {
-    auto philosopher = system.spawn(philosopher_actor, i, arbitrator,
-                                    actor_cast<strong_actor_ptr>(self), &cfg);
-    self->send(philosopher, start_atom::value);
+  atomic_long counter{0};
+  auto arbitrator = system.spawn(arbitrator_actor, cfg.n);
+  vector<actor> philosophers;
+  philosophers.reserve(cfg.n);  
+  for (int i = 0; i < cfg.n; ++i) {
+    philosophers.emplace_back(system.spawn(philosopher_actor, i, cfg.m, &counter, arbitrator));
   }
-  long counter = 0;
-  for (int i = 0; i < cfg.num_philosophers; ++i) {
-    self->receive([&](long x) { counter += x; });
+  for (auto& loop_actor : philosophers) {
+    anon_send(loop_actor, start_atom::value);
   }
-  cout << " Num retries: " << counter << std::endl;
+  system.await_all_actors_done();
+  cout << "Num retries: "<< counter << endl;
 }
 
 CAF_MAIN()
