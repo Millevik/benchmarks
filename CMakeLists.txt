@@ -385,6 +385,7 @@ add_caf_savina_benchmark(savina_09_concsll)
 add_caf_savina_benchmark(savina_10_bndbuffer)
 add_caf_savina_benchmark(savina_11_philosopher)
 add_caf_savina_benchmark(savina_12_barber)
+add_caf_savina_benchmark(savina_13_cigsmok)
 add_caf_savina_benchmark(savina_28_nqueenk)
 
 add_caf_numa_benchmark(numa_matrix_search)

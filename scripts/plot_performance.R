@@ -49,13 +49,20 @@ if (sum(data$err) > 0) {
     width = num_points * 0.12 
     plot <- plot + geom_errorbar(aes(ymin = yaes + (-err), ymax = yaes + err, color=type), width = width)
 }
+
+lim_ymin <- ifelse(is.na(opt$ymin), min(data$yaes), opt$ymin)
+lim_ymax <- ifelse(is.na(opt$ymax), max(data$yaes), opt$ymax)
+lim_xmin <- ifelse(is.na(opt$xmin), min(data$xaes), opt$xmin)
+lim_xmax <- ifelse(is.na(opt$xmax), max(data$xaes), opt$xmax)
+
 plot <- plot + geom_line(aes(color=type), size=0.4) +
     geom_point(aes(color=type, shape=type), size=2) +
     labs(x=opt$xlabel, y=opt$ylabel) +
     scale_color_discrete(name=opt$ltitle) +
     scale_shape_discrete(name=opt$ltitle) +
-    ylim(opt$ymin,opt$ymax) +
-    xlim(opt$xmin,opt$xmax) +
+    coord_cartesian(ylim = c(lim_ymin, lim_ymax), xlim = c(lim_xmin, lim_xmax)) +
+    #ylim(opt$ymin,opt$ymax) +
+    #xlim(opt$xmin,opt$xmax) +
     theme_bw() 
 
 if (!is.null(opt$title)) {
