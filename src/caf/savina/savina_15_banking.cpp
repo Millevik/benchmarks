@@ -84,7 +84,7 @@ struct account_state {
   double balance;
 };
 
-behavior account(stateful_actor<account_state>* self, int id, double balance_) {
+behavior account(stateful_actor<account_state>* self, int /*id*/, double balance_) {
   auto& s = self->state;
   s.balance = balance_;
   return {
@@ -126,6 +126,7 @@ behavior account(stateful_actor<account_state>* self, int /*id*/, double balance
   s.balance = balance_;
   s.wait_for_result = {
     [=](reply_msg_atom) {
+      auto& s = self->state;
       self->send(s.sender, reply_msg_atom::value); 
       self->unbecome();
     }
@@ -140,8 +141,7 @@ behavior account(stateful_actor<account_state>* self, int /*id*/, double balance
       s.balance -= cm.amount;
       auto& dest_account = cm.recipient;
       s.sender = actor_cast<actor>(self->current_sender());
-      self->send(dest_account,
-                 debit_msg{actor_cast<actor>(self), cm.amount});
+      self->send(dest_account, debit_msg{actor_cast<actor>(self), cm.amount});
       self->become(keep_behavior, s.wait_for_result);
     },
     [=](stop_msg_atom) {
@@ -154,7 +154,7 @@ struct account_state {
   double balance;
 };
 
-behavior account(stateful_actor<account_state>* self, int id, double balance_) {
+behavior account(stateful_actor<account_state>* self, int /*id*/, double balance_) {
   auto& s = self->state;
   self->set_default_handler(skip);
   s.balance = balance_;
@@ -173,7 +173,8 @@ behavior account(stateful_actor<account_state>* self, int id, double balance_) {
         [=](reply_msg_atom) {
           self->send(sender, reply_msg_atom::value); 
           self->unbecome();
-        });
+        }
+      );
     },
     [=](stop_msg_atom) {
       self->quit(); 
