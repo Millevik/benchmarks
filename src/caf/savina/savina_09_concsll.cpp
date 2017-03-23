@@ -193,9 +193,9 @@ behavior worker_fun(event_based_actor* self, actor master, actor sorted_list,
   int msg_count = 0;
   default_random_engine random(id + num_msgs_per_worker + write_percent);
   auto next_int = [](default_random_engine& r,
-                     int inclusive_max =
+                     int exclusive_max =
                        std::numeric_limits<int>::max()) -> int {
-    return r() % (inclusive_max +1);
+    return r() % (exclusive_max);
   };
   return {
     [=](result_msg&) mutable {

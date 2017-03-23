@@ -84,8 +84,8 @@ struct waiting_room_actor {
 };
 
 int next_int(default_random_engine& r,
-             int inclusive_max = std::numeric_limits<int>::max()) {
-  return r() % (inclusive_max + 1);
+             int exclusive_max = std::numeric_limits<int>::max()) {
+  return r() % (exclusive_max);
 };
 
 behavior waiting_room_actor(stateful_actor<waiting_room_actor>* self, size_t capacity,
