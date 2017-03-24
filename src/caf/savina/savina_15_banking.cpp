@@ -113,6 +113,40 @@ behavior account(stateful_actor<account_state>* self, int /*id*/, double balance
     }
   };
 }
+#elif REQUEST_THEN
+struct account_state {
+  double balance;
+};
+
+behavior account(stateful_actor<account_state>* self, int /*id*/, double balance_) {
+  auto& s = self->state;
+  s.balance = balance_;
+  return {
+    [=](debit_msg& dm) {
+      self->state.balance += dm.amount;
+      return reply_msg_atom::value;
+    },
+    [=](credit_msg& cm) {
+      auto& s = self->state;
+      s.balance -= cm.amount;
+      auto& dest_account = cm.recipient;
+      auto sender = actor_cast<actor>(self->current_sender());
+  #ifdef INFINITE
+      self->request(dest_account, infinite,
+                     debit_msg{actor_cast<actor>(self), cm.amount}).then(
+  #elif HIGH_TIMEOUT
+      self->request(dest_account, seconds(6000),
+                     debit_msg{actor_cast<actor>(self), cm.amount}).then(
+  #endif
+        [=](reply_msg_atom) {
+          self->send(sender, reply_msg_atom::value); 
+        });
+    },
+    [=](stop_msg_atom) {
+      self->quit(); 
+    }
+  };
+}
 #elif BECOME_UNBECOME_FAST
 struct account_state {
   double balance;
@@ -183,7 +217,6 @@ behavior account(stateful_actor<account_state>* self, int /*id*/, double balance
 }
 #endif
 
-
 struct teller_state {
   vector<actor> accounts;
   int num_completed_banks;
@@ -238,7 +271,6 @@ void caf_main(actor_system& system, const config& cfg) {
   cfg.initalize();
   auto master = system.spawn(teller, cfg.a, cfg.n);
   anon_send(master, start_msg_atom::value);
-
 }
 
 CAF_MAIN()
