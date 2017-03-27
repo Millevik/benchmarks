@@ -86,7 +86,7 @@ behavior sort_actor_fun(stateful_actor<sort_actor_state>* self, int num_values, 
   auto& s = self->state;
   s.ordering_array.reserve(num_values);
   for (int i = 0; i < num_values; ++i) {
-    s.ordering_array.emplace_back(value_msg{});
+    s.ordering_array.emplace_back(value_msg());
   }
   int values_so_far = 0;  
   int j = 0; 
