@@ -401,6 +401,7 @@ add_caf_savina_benchmark(savina_15_banking REQUEST_THEN INFINITE)
 add_caf_savina_benchmark(savina_15_banking REQUEST_THEN HIGH_TIMEOUT)
 add_caf_savina_benchmark(savina_15_banking BECOME_UNBECOME_SLOW)
 add_caf_savina_benchmark(savina_15_banking BECOME_UNBECOME_FAST)
+add_caf_savina_benchmark(savina_16_radixsort)
 add_caf_savina_benchmark(savina_28_nqueenk)
 
 add_caf_numa_benchmark(numa_matrix_search)
