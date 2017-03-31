@@ -309,7 +309,7 @@ behavior tagged_forward_actor_fun(event_based_actor* self, int source_id,
 }
 
 struct integrator_actor_state {
-  vector<map<int, double>> data;
+  vector<unordered_map<int, double>> data;
   int exits_received = 0;
 };
 
@@ -332,7 +332,7 @@ behavior integrator_actor_fun(stateful_actor<integrator_actor_state>* self,
         }
       }
       if (!processed) {
-        map<int, double> new_map; 
+        unordered_map<int, double> new_map; 
         new_map[source_id] = result;
         s.data.emplace_back(move(new_map));
       }
