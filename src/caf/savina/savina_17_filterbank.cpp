@@ -232,13 +232,14 @@ behavior delay_actor_fun(stateful_actor<delay_actor_state>* self,
 
 struct fir_filter_actor_state {
   vector<double> data;
+  vector<double> coefficients;
   int data_index;
   bool data_full;
 };
 
 behavior fir_filter_actor_fun(stateful_actor<fir_filter_actor_state>* self,
                               string /*source_id*/, int peek_length,
-                              vector<double> coefficients, actor next_actor) {
+                              vector<double> coefficients_, actor next_actor) {
   auto& s = self->state;
   s.data.reserve(peek_length);
   for (int i = 0; i < peek_length; ++i) {
@@ -246,6 +247,7 @@ behavior fir_filter_actor_fun(stateful_actor<fir_filter_actor_state>* self,
   }
   s.data_index = 0;
   s.data_full = false;
+  s.coefficients = move(coefficients_);
   return {
     [=](value_msg& message) {
       auto& s = self->state;
@@ -259,7 +261,7 @@ behavior fir_filter_actor_fun(stateful_actor<fir_filter_actor_state>* self,
       if (s.data_full) {
         auto sum = 0.0; 
         for (int i = 0; i < peek_length; ++i) {
-          sum += s.data[i] * coefficients[peek_length - i - 1] ;
+          sum += s.data[i] * s.coefficients[peek_length - i - 1] ;
         }
         self->send(next_actor, value_msg{sum});
       }
@@ -307,7 +309,7 @@ behavior tagged_forward_actor_fun(event_based_actor* self, int source_id,
 }
 
 struct integrator_actor_state {
-  vector<unordered_map<int, double>> data;
+  vector<map<int, double>> data;
   int exits_received = 0;
 };
 
@@ -330,7 +332,7 @@ behavior integrator_actor_fun(stateful_actor<integrator_actor_state>* self,
         }
       }
       if (!processed) {
-        unordered_map<int, double> new_map; 
+        map<int, double> new_map; 
         new_map[source_id] = result;
         s.data.emplace_back(move(new_map));
       }
