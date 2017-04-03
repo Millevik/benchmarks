@@ -405,7 +405,7 @@ add_caf_savina_benchmark(savina_16_radixsort)
 add_caf_savina_benchmark(savina_17_filterbank)
 add_caf_savina_benchmark(savina_18_sieve)
 #add_caf_savina_benchmark(savina_19_uct)
-add_caf_savina_benchmark(savina_21_trapeziod)
+add_caf_savina_benchmark(savina_21_trapezoid)
 add_caf_savina_benchmark(savina_28_nqueenk)
 
 add_caf_numa_benchmark(numa_matrix_search)
