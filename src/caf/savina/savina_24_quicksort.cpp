@@ -38,7 +38,7 @@ using namespace caf;
 
 class config : public actor_system_config {
 public:
-  static int n; // = 25;
+  static int n; // = 1000000;
   static long m; // 1L << 60;
   static long t; // = 2048;
   static long s; //= 1024;
@@ -51,7 +51,7 @@ public:
       .add(s, "sss,s", "seed for random number generator");
   }
 };
-int config::n = 25;
+int config::n = 1000000;
 long config::m = 1L << 60;
 long config::t = 2048;
 long config::s = 1024;
@@ -113,7 +113,7 @@ vector<long> quicksort_seq(const vector<long>& data) {
   auto right_unsorted = filter_greater_than(data, pivot);
   auto right_sorted = quicksort_seq(right_unsorted);
   vector<long> sorted_array = move(left_sorted);
-  sorted_array.resize(data_length);
+  sorted_array.reserve(data_length);
   //copy(begin(left_sorted), end(left_sorted), back_inserter(sorted_array));
   copy(begin(equal_elements), end(equal_elements), back_inserter(sorted_array));
   copy(begin(right_sorted), end(right_sorted), back_inserter(sorted_array));
