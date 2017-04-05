@@ -112,9 +112,9 @@ vector<long> quicksort_seq(const vector<long>& data) {
   auto equal_elements = filter_equals_to(data, pivot);
   auto right_unsorted = filter_greater_than(data, pivot);
   auto right_sorted = quicksort_seq(right_unsorted);
-  vector<long> sorted_array = move(left_sorted);
+  vector<long> sorted_array; //= move(left_sorted);
   sorted_array.reserve(data_length);
-  //copy(begin(left_sorted), end(left_sorted), back_inserter(sorted_array));
+  copy(begin(left_sorted), end(left_sorted), back_inserter(sorted_array));
   copy(begin(equal_elements), end(equal_elements), back_inserter(sorted_array));
   copy(begin(right_sorted), end(right_sorted), back_inserter(sorted_array));
   return sorted_array;
@@ -219,11 +219,13 @@ behavior quick_sort_actor_fun(stateful_actor<quick_sort_actor_state>* self,
       auto& s = self->state;
       if (!data.empty()) {
         if (position == position_enum::left) {
-          vector<long> temp = move(data);
+          vector<long> temp; // = move(data);
+          copy(begin(data), end(data), back_inserter(temp));
           copy(begin(s.result), end(s.result), back_inserter(temp));
           s.result = move(temp);
         } else if (position == position_enum::right) {
-          vector<long> temp = move(s.result);
+          vector<long> temp; // = move(s.result);
+          copy(begin(s.result), end(s.result), back_inserter(temp));
           copy(begin(data), end(data), back_inserter(temp));
           s.result = move(temp);
         }
