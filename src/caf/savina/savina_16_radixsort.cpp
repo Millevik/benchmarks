@@ -64,7 +64,8 @@ long long next_long(default_random_engine& r) {
   return des(r);
 };
 
-behavior int_source_actor_fun(event_based_actor* self, int num_values, long long max_value, long long seed) {
+behavior int_source_actor_fun(event_based_actor* self, int num_values,
+                              long long max_value, long long seed) {
   default_random_engine random(seed);
   return {
     [=](next_actor_msg& nm) mutable {
@@ -82,7 +83,8 @@ struct sort_actor_state {
   vector<value_msg> ordering_array;
 };
 
-behavior sort_actor_fun(stateful_actor<sort_actor_state>* self, int num_values, long long radix, actor next_actor) {
+behavior sort_actor_fun(stateful_actor<sort_actor_state>* self, int num_values,
+                        long long radix, actor next_actor) {
   auto& s = self->state;
   s.ordering_array.reserve(num_values);
   for (int i = 0; i < num_values; ++i) {
@@ -126,7 +128,8 @@ behavior validation_actor_fun(event_based_actor* self, int num_values) {
       sum_so_far += prev_value;
       if (values_so_far == num_values) {
         if (get<0>(error_value) >= 0) {
-          cout << "ERROR: Value out of place: " << get<0>(error_value) << " at index " << get<1>(error_value) << endl;
+          cout << "ERROR: Value out of place: " << get<0>(error_value)
+               << " at index " << get<1>(error_value) << endl;
         } else {
           cout << "Elements sum: " << sum_so_far << endl;
         }

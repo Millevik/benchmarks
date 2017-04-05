@@ -156,6 +156,7 @@ behavior worker_fun(event_based_actor* self, actor master, int /*id*/) {
       self->send(master, work_msg{newPriority, srA + newDim, scA + zerDim, srB + zerDim, scB + newDim, srC + newDim, scC + newDim, newNumBlocks, newDim});
       self->send(master , work_msg{newPriority, srA + newDim, scA + newDim, srB + newDim, scB + newDim, srC + newDim, scC + newDim, newNumBlocks, newDim});
     } else {
+      aout(self) << "XXX" << endl;
       auto& a = config::a;
       auto& b = config::b;
       auto& c = config::c;
@@ -214,7 +215,8 @@ behavior master_fun(stateful_actor<master_state>* self) {
   // onPostStart()
   {
     for (int i = 0; i < s.num_workers; ++i) {
-      s.workers.emplace_back(self->spawn(worker_fun, actor_cast<actor>(self), i));
+      s.workers.emplace_back(
+        self->spawn(worker_fun, actor_cast<actor>(self), i));
     }
     int data_length = config::data_length;
     int num_blocks = config::data_length * config::data_length;
