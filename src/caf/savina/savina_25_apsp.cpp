@@ -174,9 +174,9 @@ behavior apsp_floyd_warshall_actor_fun(
   s.received_neighbors = false;
   s.current_iter_data = apsp_utils::get_block(init_graph_data, my_block_id);
   auto store_iteration_data =
-    [=](int /*iteration*/, int source_id, const arr2l& data_array) {
+    [=](int /*iteration*/, int source_id, arr2l&& data_array) {
       auto& s = self->state;
-      s.neighbor_data_per_iteration[source_id] = data_array;
+      s.neighbor_data_per_iteration[source_id] = move(data_array);
       return s.neighbor_data_per_iteration.size()
              == static_cast<size_t>(s.num_neighbors);
     };
@@ -215,7 +215,8 @@ behavior apsp_floyd_warshall_actor_fun(
     // send the current result to all other blocks who might need it
     // note: this is inefficient version where data is sent to neighbors
     // who might not need it for the current value of k
-    auto result_message = apsp_result_msg{s.k, my_block_id, s.current_iter_data};
+    auto result_message =
+      apsp_result_msg{s.k, my_block_id, s.current_iter_data};
     for(auto& loop_neighbor : s.neighbors) {
       self->send(loop_neighbor, result_message); 
     }
@@ -228,8 +229,8 @@ behavior apsp_floyd_warshall_actor_fun(
              << endl;
         exit(1);
       }
-      auto have_all_data =
-        store_iteration_data(message.k, message.my_block_id, message.init_data);
+      auto have_all_data = store_iteration_data(message.k, message.my_block_id,
+                                                move(message.init_data));
       if (have_all_data) {
         // received enough data from neighbors, can proceed to do computation
         // for next k
