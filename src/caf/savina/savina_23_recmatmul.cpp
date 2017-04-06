@@ -117,13 +117,13 @@ int config::block_threshold = 16384;
 
 struct work_msg {
   int priority;
-  int srA;
-  int scA;
-  int srB;
-  int scB;
-  int srC;
-  int scC;
-  int numBlocks;
+  int sr_a;
+  int sc_a;
+  int sr_b;
+  int sc_b;
+  int sr_c;
+  int sc_c;
+  int num_blocks;
   int dim;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(work_msg);
@@ -134,42 +134,66 @@ using stop_msg_atom = atom_constant<atom("stop")>;
 behavior worker_fun(event_based_actor* self, actor master, int /*id*/) {
   int threshold = config::block_threshold;
   auto my_rec_mat = [=](work_msg& work_message) {
-    int srA = work_message.srA;
-    int scA = work_message.scA;
-    int srB = work_message.srB;
-    int scB = work_message.scB;
-    int srC = work_message.srC;
-    int scC = work_message.scC;
-    int numBlocks = work_message.numBlocks;
+    int sr_a = work_message.sr_a;
+    int sc_a = work_message.sc_a;
+    int sr_b = work_message.sr_b;
+    int sc_b = work_message.sc_b;
+    int sr_c = work_message.sr_c;
+    int sc_c = work_message.sc_c;
+    int num_blocks = work_message.num_blocks;
     int dim = work_message.dim;
-    int newPriority = work_message.priority + 1;
-    if (numBlocks > threshold) {
-      int zerDim = 0;
-      int newDim = dim / 2;
-      int newNumBlocks = numBlocks / 4;
-      self->send(master, work_msg{newPriority, srA + zerDim, scA + zerDim, srB + zerDim, scB + zerDim, srC + zerDim, scC + zerDim, newNumBlocks, newDim});
-      self->send(master, work_msg{newPriority, srA + zerDim, scA + newDim, srB + newDim, scB + zerDim, srC + zerDim, scC + zerDim, newNumBlocks, newDim});
-      self->send(master, work_msg{newPriority, srA + zerDim, scA + zerDim, srB + zerDim, scB + newDim, srC + zerDim, scC + newDim, newNumBlocks, newDim});
-      self->send(master, work_msg{newPriority, srA + zerDim, scA + newDim, srB + newDim, scB + newDim, srC + zerDim, scC + newDim, newNumBlocks, newDim});
-      self->send(master, work_msg{newPriority, srA + newDim, scA + zerDim, srB + zerDim, scB + zerDim, srC + newDim, scC + zerDim, newNumBlocks, newDim});
-      self->send(master, work_msg{newPriority, srA + newDim, scA + newDim, srB + newDim, scB + zerDim, srC + newDim, scC + zerDim, newNumBlocks, newDim});
-      self->send(master, work_msg{newPriority, srA + newDim, scA + zerDim, srB + zerDim, scB + newDim, srC + newDim, scC + newDim, newNumBlocks, newDim});
-      self->send(master , work_msg{newPriority, srA + newDim, scA + newDim, srB + newDim, scB + newDim, srC + newDim, scC + newDim, newNumBlocks, newDim});
+    int new_priority = work_message.priority + 1;
+    if (num_blocks > threshold) {
+      int zer_dim = 0;
+      int new_dim = dim / 2;
+      int new_num_blocks = num_blocks / 4;
+      self->send(master,
+                 work_msg{new_priority, sr_a + zer_dim, sc_a + zer_dim,
+                          sr_b + zer_dim, sc_b + zer_dim, sr_c + zer_dim,
+                          sc_c + zer_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + zer_dim, sc_a + new_dim,
+                          sr_b + new_dim, sc_b + zer_dim, sr_c + zer_dim,
+                          sc_c + zer_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + zer_dim, sc_a + zer_dim,
+                          sr_b + zer_dim, sc_b + new_dim, sr_c + zer_dim,
+                          sc_c + new_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + zer_dim, sc_a + new_dim,
+                          sr_b + new_dim, sc_b + new_dim, sr_c + zer_dim,
+                          sc_c + new_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + new_dim, sc_a + zer_dim,
+                          sr_b + zer_dim, sc_b + zer_dim, sr_c + new_dim,
+                          sc_c + zer_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + new_dim, sc_a + new_dim,
+                          sr_b + new_dim, sc_b + zer_dim, sr_c + new_dim,
+                          sc_c + zer_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + new_dim, sc_a + zer_dim,
+                          sr_b + zer_dim, sc_b + new_dim, sr_c + new_dim,
+                          sc_c + new_dim, new_num_blocks, new_dim});
+      self->send(master,
+                 work_msg{new_priority, sr_a + new_dim, sc_a + new_dim,
+                          sr_b + new_dim, sc_b + new_dim, sr_c + new_dim,
+                          sc_c + new_dim, new_num_blocks, new_dim});
     } else {
       aout(self) << "XXX" << endl;
       auto& a = config::a;
       auto& b = config::b;
       auto& c = config::c;
-      int endR = srC + dim;
-      int endC = scC + dim;
-      int i = srC;
-      while (i < endR) {
-        int j = scC;
-        while (j < endC) {
+      int end_r = sr_c + dim;
+      int end_c = sc_c + dim;
+      int i = sr_c;
+      while (i < end_r) {
+        int j = sc_c;
+        while (j < end_c) {
           {
             int k = 0;
             while (k < dim) {
-              c(i, j) += a(i, scA + k) * b(srB + k, j);
+              c(i, j) += a(i, sc_a + k) * b(sr_b + k, j);
               k += 1;
             }
           }
@@ -208,7 +232,7 @@ behavior master_fun(stateful_actor<master_state>* self) {
   s.num_work_completed = 0;
   auto send_work = [=](work_msg&& work_message) {
     auto& s = self->state;
-    int work_index = (work_message.srC + work_message.scC) % s.num_workers; 
+    int work_index = (work_message.sr_c + work_message.sc_c) % s.num_workers; 
     self->send(s.workers[work_index], move(work_message));
     ++s.num_work_sent;
   };

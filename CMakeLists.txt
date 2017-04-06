@@ -408,6 +408,7 @@ add_caf_savina_benchmark(savina_18_sieve)
 add_caf_savina_benchmark(savina_21_trapezoid)
 add_caf_savina_benchmark(savina_23_recmatmul)
 add_caf_savina_benchmark(savina_24_quicksort)
+add_caf_savina_benchmark(savina_25_apsp)
 add_caf_savina_benchmark(savina_29_fib)
 add_caf_savina_benchmark(savina_28_nqueenk)
 
