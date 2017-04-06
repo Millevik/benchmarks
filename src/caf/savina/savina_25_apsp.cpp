@@ -116,6 +116,7 @@ struct apsp_utils {
     return local_data;
   }
 
+  // print content of arr2l
   template<class T>
   static void print(T&& array) {
     ostringstream ss;
@@ -210,6 +211,7 @@ behavior apsp_floyd_warshall_actor_fun(
     }
   };
   auto notify_neighbors = [=] {
+    auto& s = self->state;
     // send the current result to all other blocks who might need it
     // note: this is inefficient version where data is sent to neighbors
     // who might not need it for the current value of k
@@ -259,7 +261,6 @@ void caf_main(actor_system& system, const config& cfg) {
   apsp_utils utils;
   utils.generate_graph();
   auto& graph_data = utils.graph_data;
-  //apsp_utils::print(graph_data);
   auto num_nodes = cfg.n;
   auto block_size = cfg.b;
   int num_blocks_in_single_dim = num_nodes / block_size;
@@ -289,6 +290,12 @@ void caf_main(actor_system& system, const config& cfg) {
         }
       }
       anon_send(block_actors[bi][bj], apsp_neighbor_msg{move(neighbors)});
+    }
+  }
+  // start the computation
+  for (int bi = 0; bi < num_blocks_in_single_dim; ++bi) {
+    for (int bj = 0; bj < num_blocks_in_single_dim; ++bj) {
+      anon_send(block_actors[bi][bj], apsp_initial_msg_atom::value);
     }
   }
 }
