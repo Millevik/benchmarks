@@ -164,7 +164,7 @@ struct apsp_floyd_warshall_actor_state {
 
 behavior apsp_floyd_warshall_actor_fun(
   stateful_actor<apsp_floyd_warshall_actor_state>* self, int my_block_id,
-  int block_size, int graph_size, vector<vector<long>> init_graph_data) {
+  int block_size, int graph_size, const arr2l& init_graph_data) {
   auto& s = self->state;
   s.num_blocks_in_single_dim = graph_size / block_size;
   s.num_neighbors = 2 * (s.num_blocks_in_single_dim - 1);
