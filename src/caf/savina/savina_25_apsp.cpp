@@ -145,11 +145,8 @@ struct apsp_result_msg {
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(apsp_result_msg);
 
-template<class T>
-using my_list = vector<T>;
-
 struct apsp_neighbor_msg {
-  my_list<actor> neighbors;
+  list<actor> neighbors;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(apsp_neighbor_msg);
 
@@ -158,7 +155,7 @@ struct apsp_floyd_warshall_actor_state {
     int num_neighbors;
     int row_offset;
     int col_offset;
-    my_list<actor> neighbors;
+    list<actor> neighbors;
     int k;
     unordered_map<int, arr2l> neighbor_data_per_iteration;
     bool received_neighbors;
@@ -280,7 +277,7 @@ void caf_main(actor_system& system, const config& cfg) {
   // create the links to the neighbors
   for (int bi = 0; bi < num_blocks_in_single_dim; ++bi) {
     for (int bj = 0; bj < num_blocks_in_single_dim; ++bj) {
-      my_list<actor> neighbors;
+      list<actor> neighbors;
       // add neighbors in same column
       for (int r = 0; r < num_blocks_in_single_dim; ++r) {
         if (r != bi) {
