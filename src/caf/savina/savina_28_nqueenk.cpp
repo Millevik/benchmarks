@@ -237,7 +237,7 @@ void caf_main(actor_system& system, const config& cfg) {
   auto act_solution = master::result_counter;
   auto solutions_limit = cfg.solutions_limit;
   auto valid = act_solution >= solutions_limit && act_solution <= exp_solution;
-  cout << "Result valid:" << valid << endl;
+  cout << "Result valid: " << valid << endl;
 }
 
 CAF_MAIN()
