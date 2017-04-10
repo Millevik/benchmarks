@@ -25,43 +25,65 @@
 using namespace std;
 using namespace caf;
 
-using work_atom = atom_constant<atom("work")>;
-using result_atom = atom_constant<atom("result")>;
-using done_atom = atom_constant<atom("done")>;
-using stop_atom = atom_constant<atom("stop")>;
-
-class config : public actor_system_config {
-public:
-  int num_workers = 20;
-  int size = 12;
-  int threshold = 4;
-  int priorities = 10;
-  int solutions_limit = 1500000;
-
-  config() {
-    opt_group{custom_options_, "global"}
-      .add(num_workers, "workers", "number of workers")
-      .add(size, "size", "size of the chess board")
-      .add(threshold, "threshold",
-           "threshold for switching from parrallel processing to sequential "
-           "processing")
-      .add(solutions_limit, "solutions-limit", "solutions limit???");
-  }
-};
-
-struct work_msg {
-  int priority;
-  vector<int> data;
-  int depth;
-};
-
 #define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
   namespace caf {                                                              \
   template <>                                                                  \
   struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
   }
 
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(work_msg);
+constexpr long solutions[] = {
+  1,
+  0,
+  0,
+  2,
+  10,     /* 5 */
+  4,
+  40,
+  92,
+  352,
+  724,    /* 10 */
+  2680,
+  14200,
+  73712,
+  365596,
+  2279184, /* 15 */
+  14772512,
+  95815104,
+  666090624,
+  4968057848L,
+  39029188884L, /* 20 */
+};
+constexpr int max_solutions = sizeof(solutions) / sizeof(solutions[0]);
+
+class config : public actor_system_config {
+public:
+  static int num_workers;
+  static int size;
+  static int threshold;
+  static int priorities;
+  static int solutions_limit;
+
+  config() {
+    opt_group{custom_options_, "global"}
+      .add(size, "nnn,n", "size of the chess board")
+      .add(num_workers, "www,w", "number of workers")
+      .add(threshold, "ttt,t",
+           "threshold for switching from parrallel processing to sequential "
+           "processing")
+      .add(solutions_limit, "sss,s", "solutions limit");
+  }
+
+  void initialize() const {
+    size = max(1, min(size, max_solutions));
+    threshold = max(1, min(threshold, max_solutions));
+  }
+
+};
+int config::num_workers = 20;
+int config::size = 12;
+int config::threshold = 4;
+int config::priorities = 10;
+int config::solutions_limit = 1500000;
 
 // a contains array of n queen positions. Returns 1
 // if none of the queens conflict, and returns 0 otherwise.
@@ -77,12 +99,23 @@ bool board_valid(int n, const vector<int>& a) {
   return true;
 };
 
+struct work_msg {
+  int priority;
+  vector<int> data;
+  int depth;
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(work_msg);
+
+using done_msg_atom = atom_constant<atom("done")>;
+using result_msg_atom = atom_constant<atom("result")>;
+using stop_msg_atom = atom_constant<atom("stop")>;
+
 // calc N-Queens problem sequential
 // recusive function cannot be defined as lambda function
 void nqueens_kernel_seq(event_based_actor* self, actor master, int size,
-                        vector<int> a, int depth) {
+                        const vector<int>& a, int depth) {
   if (size == depth)
-    self->send(master, result_atom::value);
+    self->send(master, result_msg_atom::value);
   else {
     for (int i = 0; i < size; ++i) {
       auto b = a;
@@ -94,16 +127,15 @@ void nqueens_kernel_seq(event_based_actor* self, actor master, int size,
   }
 };
 
-behavior worker_actor(event_based_actor* self, actor master,
-                      const config* cfg) {
-  auto size = cfg->size;
-  auto threshold = cfg->threshold;
+behavior worker_fun(event_based_actor* self, actor master, int /*id*/) {
+  auto size = config::size;
+  auto threshold = config::threshold;
   // calc N-Queens problem in parallel
   auto nqueens_kernel_par = [=](work_msg&& msg) {
     auto& a = msg.data;
     auto& depth = msg.depth;
     if (size == depth)
-      self->send(master, result_atom::value);
+      self->send(master, result_msg_atom::value);
     else if (depth >= threshold)
       nqueens_kernel_seq(self, master, size, a, depth);
     else {
@@ -113,91 +145,99 @@ behavior worker_actor(event_based_actor* self, actor master,
         auto b = a;
         b.emplace_back(i);
         if (board_valid(new_depth, b)) {
-          self->send(master, work_atom::value,
-                     work_msg{new_priority, move(b), new_depth});
+          self->send(master, work_msg{new_priority, move(b), new_depth});
         }
       }
     }
   };
-
-  return {[=](work_atom, work_msg msg) {
-            nqueens_kernel_par(move(msg));
-            self->send(master, done_atom::value);
-          },
-          [=](stop_atom) {
-            self->send(master, stop_atom::value);
-            self->quit();
-          }};
+  return {
+    [=](work_msg& msg) {
+      nqueens_kernel_par(move(msg));
+      self->send(master, done_msg_atom::value);
+    },
+    [=](stop_msg_atom) {
+      self->send(master, stop_msg_atom::value);
+      self->quit();
+    }};
 }
+
+struct master {
+  static long result_counter;
+};
+long master::result_counter = 0;
+
 
 struct master_data {
   vector<actor> workers;
   int message_counter = 0;
   int num_worker_send = 0;
-  long result_counter = 0;
   int num_work_completed = 0;
   int num_workers_terminated = 0;
 };
 
-behavior master_actor(stateful_actor<master_data>* self, actor result,
-                      const config* cfg) {
-  auto num_workers = cfg->num_workers;
-  auto priorities = cfg->priorities;
-  auto solutions_limit = cfg->solutions_limit;
-  auto send_work = [=](work_msg&& msg) {
-    self->send(self->state.workers[self->state.message_counter],
-               work_atom::value, move(msg));
-    self->state.message_counter =
-      (self->state.message_counter + 1) % num_workers;
-    ++self->state.num_worker_send;
+behavior master_fun(stateful_actor<master_data>* self, int num_workers,
+                    int priorities) {
+  auto send_work = [=](work_msg&& work_message) {
+    auto& s = self->state;
+    self->send(s.workers[self->state.message_counter], move(work_message));
+    s.message_counter = (s.message_counter + 1) % num_workers;
+    ++s.num_worker_send;
   };
   auto request_workers_to_terminate = [=]() {
-    for (auto e : self->state.workers) {
-      self->send(e, stop_atom::value);
+    auto& s = self->state;
+    for (auto& e : s.workers) {
+      self->send(e, stop_msg_atom::value);
     }
   };
-  self->state.workers.reserve(num_workers);
+  auto& s = self->state;
+  auto solutions_limit = config::solutions_limit;
+  // onPostStart()
+  s.workers.reserve(num_workers);
   for (int i = 0; i < num_workers; ++i) {
     self->state.workers.emplace_back(
-      self->spawn(worker_actor, actor_cast<actor>(self), cfg));
+      self->spawn(worker_fun, actor_cast<actor>(self), i));
   }
-  send_work({priorities, {}, 0});
-  return {[=](work_atom, work_msg msg) { send_work(move(msg)); },
-          [=](result_atom) {
-            ++self->state.result_counter;
-            if (self->state.result_counter == solutions_limit) {
-              request_workers_to_terminate();
-            }
-          },
-          [=](done_atom) {
-            ++self->state.num_work_completed;
-            if (self->state.num_work_completed == self->state.num_worker_send) {
-              request_workers_to_terminate();
-            }
-          },
-          [=](stop_atom) {
-            ++self->state.num_workers_terminated;
-            if (self->state.num_workers_terminated == num_workers) {
-              self->send(result, self->state.result_counter);
-              self->quit();
-            }
-          }};
+  vector<int> in_array;
+  work_msg work_messge{priorities, move(in_array), 0};
+  send_work(move(work_messge));
+  return {
+    [=](work_msg& work_message) { 
+      send_work(move(work_message)); 
+    },
+    [=](result_msg_atom) {
+      ++master::result_counter;
+      if (master::result_counter == solutions_limit) {
+        request_workers_to_terminate();
+      }
+    },
+    [=](done_msg_atom) {
+      auto& s = self->state;
+      ++s.num_work_completed;
+      if (s.num_work_completed == s.num_worker_send) {
+        request_workers_to_terminate();
+      }
+    },
+    [=](stop_msg_atom) {
+      auto& s = self->state;
+      ++s.num_workers_terminated;
+      if (s.num_workers_terminated == num_workers) {
+        self->quit();
+      }
+    }};
 }
 
 void caf_main(actor_system& system, const config& cfg) {
-  scoped_actor self{system};
-  system.spawn(master_actor, self, &cfg);
-
-  long act_solution;
-  bool valid;
-  self->receive([&](long result_count) {
-    act_solution = result_count;
-    valid = act_solution >= cfg.solutions_limit;
-    cout << "act_solution: " << act_solution << " limit:" << cfg.solutions_limit
-         << endl;
-  });
-  cout << "Solutions found:" << act_solution << endl;
-  cout << "Result valid:" << valid << endl; // bug in savina???
+  cfg.initialize();
+  int num_workers = cfg.num_workers;
+  int priorities = cfg.priorities;
+  vector<actor> master;
+  master.emplace_back(system.spawn(master_fun, num_workers, priorities));
+  system.await_all_actors_done();
+  auto exp_solution = solutions[cfg.size - 1];
+  auto act_solution = master::result_counter;
+  auto solutions_limit = cfg.solutions_limit;
+  auto valid = act_solution >= solutions_limit && act_solution <= exp_solution;
+  cout << "Result valid:" << valid << endl;
 }
 
 CAF_MAIN()
