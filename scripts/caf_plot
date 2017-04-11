@@ -132,7 +132,14 @@ rename_labels_in_file() {
     return 0
   fi
   for idx in ${!label_list[@]}; do
-    sed -i "s/${label_list[$idx]}/${new_label_list[$idx]}/g" "$csv_tmp_file"
+    if [ "$(uname)" == "Linux" ]; then
+      sed -i "s/${label_list[$idx]}/${new_label_list[$idx]}/g" "$csv_tmp_file"
+    elif [ "$(uname)" == "Darwin" ]; then #MacOs
+      sed -i "" "s/${label_list[$idx]}/${new_label_list[$idx]}/g" "$csv_tmp_file"
+    else
+      >&2 echo "Operating System not supported"
+      exit 1
+    fi
   done
 }
 
@@ -152,7 +159,14 @@ beautify_labels_if_possible() {
         fi
       done
     done
-    sed -i -r 's/_[0-9]+\"$/\"/g' $csv_tmp_file
+    if [ "$(uname)" == "Linux" ]; then
+      sed -i -r 's/_[0-9]+\"$/\"/g' $csv_tmp_file
+    elif [ "$(uname)" == "Darwin" ]; then #MacOs
+      sed -i "" -r 's/_[0-9]+\"$/\"/g' $csv_tmp_file
+    else
+      >&2 echo "Operating System not supported"
+      exit 1
+    fi
   fi
 }
 
