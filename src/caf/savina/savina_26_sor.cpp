@@ -405,7 +405,7 @@ behavior sor_runner_fun(stateful_actor<sor_runner_state>* self, int n) {
           move(msg.m_border.border_actors[i]);
       }
       for (int i = 0; i < t.s; ++i) {
-        for (int j = 0; j < t.part; ++i) {
+        for (int j = 0; j < t.part; ++j) {
           auto pos = i * (t.part + 1) + j;
           self->send(t.sor_actors[pos],
                      sor_start_msg{config::jacobi_num_iter, t.sor_actors});
@@ -416,6 +416,8 @@ behavior sor_runner_fun(stateful_actor<sor_runner_state>* self, int n) {
 }
 
 void caf_main(actor_system& system, const config& cfg) {
+  cerr << "savina implementation not working..." << endl;
+  exit(1);
   cfg.initialize();
   auto data_level = cfg.n;
   auto sor_runner = system.spawn(sor_runner_fun, data_level);
