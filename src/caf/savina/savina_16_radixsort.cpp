@@ -21,8 +21,9 @@
 #include <vector>
 #include <cstdlib>
 
-
 #include "caf/all.hpp"
+
+#include "savina_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
@@ -59,18 +60,13 @@ struct value_msg {
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(value_msg);
 
-std::uniform_int_distribution<long long> des;
-long long next_long(default_random_engine& r) {
-  return des(r);
-};
-
 behavior int_source_actor_fun(event_based_actor* self, int num_values,
                               long long max_value, long long seed) {
-  default_random_engine random(seed);
+  random_gen random(seed);
   return {
     [=](next_actor_msg& nm) mutable {
       for (int i = 0; i < num_values; ++i) {
-        auto candidate = abs(next_long(random)) % max_value;
+        auto candidate = abs(random.next_long()) % max_value;
         auto message = value_msg{candidate};
         self->send(nm.next_actor, move(message));
       }

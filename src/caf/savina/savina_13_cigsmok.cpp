@@ -24,6 +24,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+
 using namespace std;
 using namespace caf;
 
@@ -63,11 +65,6 @@ using started_smoking_atom = atom_constant<atom("started")>;
 using start_msg_atom = atom_constant<atom("startmsg")>;
 using exit_msg_atom = atom_constant<atom("exitmsg")>;
 
-int next_int(default_random_engine& r,
-             int exclusive_max = std::numeric_limits<int>::max()) {
-  return r() % (exclusive_max);
-};
-
 behavior smoker_actor_fun(event_based_actor* self, actor arbiter_actor) {
   return {
     [=](start_smoking& sm) {
@@ -82,7 +79,7 @@ behavior smoker_actor_fun(event_based_actor* self, actor arbiter_actor) {
 
 struct arbiter_actor_state {
   vector<actor> smoker_actors;
-  default_random_engine random;
+  random_gen random;
   int rounds_so_far;
 };
 
@@ -94,12 +91,12 @@ behavior arbiter_actor_fun(stateful_actor<arbiter_actor_state>* self,
   for (int i = 0; i < num_smokers; ++i) {
     s.smoker_actors.emplace_back(self->spawn(smoker_actor_fun, my_self));
   }
-  s.random.seed(num_rounds * num_smokers);
+  s.random.set_seed(num_rounds * num_smokers);
   s.rounds_so_far = 0;
   auto notify_random_smoker = [=]() {
     auto& s = self->state; 
-    auto new_smoker_index = abs(next_int(s.random)) % num_smokers;
-    auto busy_wait_period = next_int(s.random, 1000) + 10;
+    auto new_smoker_index = abs(s.random.next_int()) % num_smokers;
+    auto busy_wait_period = s.random.next_int(1000) + 10;
     self->send(s.smoker_actors[new_smoker_index], start_smoking{busy_wait_period});
   };
   auto request_smokers_to_exit = [=]() {

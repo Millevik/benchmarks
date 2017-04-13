@@ -24,6 +24,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+
 using namespace std;
 using std::chrono::seconds;
 using namespace caf;
@@ -139,17 +141,12 @@ void check_sorted(const vector<long>& data) {
   }
 }
 
-std::uniform_int_distribution<long long> des;
-long long next_long(default_random_engine& r) {
-  return des(r);
-};
-
 vector<long> randomly_init_array() {
   vector<long> result;
   result.reserve(config::n);
-  default_random_engine random(config::s);
+  random_gen random(config::s);
   for (int i = 0; i < config::n; i++) {
-    result.emplace_back(next_long(random) % config::m);
+    result.emplace_back(random.next_long() % config::m);
   }
   return result;
 }

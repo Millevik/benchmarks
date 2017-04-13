@@ -24,6 +24,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+
 using namespace std;
 using std::chrono::seconds;
 using namespace caf;
@@ -53,12 +55,6 @@ int config::n = 300;
 int config::b = 50;
 int config::w = 100;
 
-int next_int(default_random_engine& r,
-             int exclusive_max = std::numeric_limits<int>::max()) {
-  return r() % exclusive_max;
-}
-
-
 template<class T>
 using arr2_t = vector<vector<T>>;
 
@@ -85,13 +81,13 @@ struct apsp_utils {
   void generate_graph() {
     auto n = config::n; 
     auto w = config::w;
-    default_random_engine random(n);
+    random_gen random(n);
     arr2l local_data = array_tabulate<long>(n, n, [](size_t, size_t) { 
       return 0; 
     });
     for (int i = 0; i < n; ++i) {
       for (int j = i + 1; j < n; ++j) {
-        auto r = next_int(random, w) + 1; 
+        auto r = random.next_int(w) + 1; 
         local_data[i][j] = r;
         local_data[j][i] = r;
       }

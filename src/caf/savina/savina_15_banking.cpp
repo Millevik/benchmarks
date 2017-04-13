@@ -23,6 +23,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+  
 using namespace std;
 using std::chrono::seconds;
 using namespace caf;
@@ -68,16 +70,6 @@ struct credit_msg {
   actor recipient;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(credit_msg);
-
-int next_int(default_random_engine& r,
-             int exclusive_max = std::numeric_limits<int>::max()) {
-  return r() % (exclusive_max);
-}
-
-double next_double(default_random_engine& r) {
-  static uniform_real_distribution<> dis;
-  return dis(r);
-}
 
 #ifdef REQUEST_AWAIT
 struct account_state {
@@ -220,7 +212,7 @@ behavior account(stateful_actor<account_state>* self, int /*id*/, double balance
 struct teller_state {
   vector<actor> accounts;
   int num_completed_banks;
-  default_random_engine random_gen; 
+  random_gen random; 
 };
 
 behavior teller(stateful_actor<teller_state>* self, int num_accounts, int num_bankings) {
@@ -230,12 +222,12 @@ behavior teller(stateful_actor<teller_state>* self, int num_accounts, int num_ba
     s.accounts.emplace_back(self->spawn(account, i, config::initial_balance)); 
   }
   s.num_completed_banks = 0;
-  s.random_gen.seed(123456);
+  s.random.set_seed(123456);
   auto generate_work = [=]() {
     auto& s = self->state;
     //Warning s.accounts.size() musst be 10 or higher
-    auto src_account_id = next_int(s.random_gen, (s.accounts.size() / 10) * 8);
-    auto loop_id = next_int(s.random_gen, s.accounts.size() - src_account_id);
+    auto src_account_id = s.random.next_int((s.accounts.size() / 10) * 8);
+    auto loop_id = s.random.next_int(s.accounts.size() - src_account_id);
     if (loop_id == 0) {
       ++loop_id; 
     }
@@ -243,7 +235,7 @@ behavior teller(stateful_actor<teller_state>* self, int num_accounts, int num_ba
 
     auto& src_account = s.accounts[src_account_id];
     auto& dest_account = s.accounts[dest_account_id];
-    auto amount = abs(next_double(s.random_gen)) * 1000;
+    auto amount = abs(s.random.next_double()) * 1000;
     auto sender = actor_cast<actor>(self);
     auto cm = credit_msg{move(sender), amount, dest_account};
     self->send(src_account, move(cm));

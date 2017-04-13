@@ -18,12 +18,12 @@
  ******************************************************************************/
 
 #include <iostream>
-#include <random>
 #include <cstdlib>
-#include <limits>
 #include <deque>
 
 #include "caf/all.hpp"
+
+#include "savina_helper.hpp"
 
 using namespace std;
 using namespace caf;
@@ -60,19 +60,15 @@ int config::cons_cost = 25;
 
 double process_item(double cur_term, int cost) {
   double res = cur_term;
-  default_random_engine random(cost);
-  uniform_real_distribution<> dis(0, 1);
-  auto next_double = [&]() mutable {
-    return dis(random); 
-  };
+  random_gen random(cost);
   if (cost > 0) {
     for (int i = 0; i < cost; i++) {
       for (int j = 0; j < 100; j++) {
-        res += log(abs(next_double()) + 0.01);
+        res += log(abs(random.next_double()) + 0.01);
       }
     }
   } else {
-    res += log(abs(next_double()) + 0.01);
+    res += log(abs(random.next_double()) + 0.01);
   }
   return res;
 }

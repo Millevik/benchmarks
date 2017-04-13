@@ -24,6 +24,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+
 using namespace std;
 using namespace caf;
 
@@ -83,11 +85,6 @@ struct waiting_room_actor {
   bool barber_asleep = true;
 };
 
-int next_int(default_random_engine& r,
-             int exclusive_max = std::numeric_limits<int>::max()) {
-  return r() % (exclusive_max);
-};
-
 behavior waiting_room_actor(stateful_actor<waiting_room_actor>* self, size_t capacity,
                             actor barber) {
   return {
@@ -125,13 +122,13 @@ behavior waiting_room_actor(stateful_actor<waiting_room_actor>* self, size_t cap
 }
 
 behavior barber_actor(event_based_actor* self) {
-  default_random_engine random{};
+  random_gen random;
   return {
     [=](enter& msg) mutable {
       auto& customer = msg.customer;
       auto& room = msg.room;
       self->send(customer, start_atom::value);
-      busy_wait(next_int(random, config::ahr) + 10);
+      busy_wait(random.next_int(config::ahr) + 10);
       self->send(customer, done_atom::value);
       self->send(room, next_atom::value);
     },
@@ -165,7 +162,7 @@ behavior customer_actor(event_based_actor* self, long /*id*/, actor factory_acto
 behavior costumer_factory_actor(event_based_actor* self,
                                 atomic_long* id_generator, int haircuts,
                                 actor room) {
-  default_random_engine random{};
+  random_gen random;
   int num_hair_cuts_so_far = 0;
   auto send_customer_to_room = [=](actor&& customer) {
     auto enter_message = enter{move(customer), room};
@@ -180,7 +177,7 @@ behavior costumer_factory_actor(event_based_actor* self,
     [=](start_atom) mutable {
       for (int i = 0; i < haircuts; ++i) {
         send_to_room();
-        busy_wait(next_int(random, config::apr) + 10);
+        busy_wait(random.next_int(config::apr) + 10);
       } 
     },
     [=](returned& msg) {

@@ -18,11 +18,11 @@
  ******************************************************************************/
 
 #include <iostream>
-#include <random>
 #include <unordered_map>
-#include <limits>
 
 #include "caf/all.hpp"
+
+#include "savina_helper.hpp"
 
 using namespace std;
 using namespace caf;
@@ -100,21 +100,16 @@ behavior worker_fun(event_based_actor* self, actor master, actor dictionary,
                       int id, int num_msgs_per_worker) {
   const auto write_percent = config::write_percentage;
   int message_count = 0;
-  default_random_engine random(id + num_msgs_per_worker + write_percent);
-  auto next_int = [](default_random_engine& r,
-                     int exclusive_max =
-                       std::numeric_limits<int>::max()) -> int {
-    return r() % (exclusive_max);
-  };
+  random_gen random(id + num_msgs_per_worker + write_percent);
   return {
     [=](result_msg&) mutable {
       ++message_count;
       if (message_count <= num_msgs_per_worker) {
-        int an_int = next_int(random, 100);
+        int an_int = random.next_int(100);
         if (an_int < write_percent) {
-          self->send(dictionary, write_msg{next_int(random), next_int(random)});
+          self->send(dictionary, write_msg{random.next_int(), random.next_int()});
         } else {
-          self->send(dictionary, read_msg{next_int(random)});
+          self->send(dictionary, read_msg{random.next_int()});
         }
       } else {
         self->send(master, end_work_msg_atom::value);

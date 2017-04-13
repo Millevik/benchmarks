@@ -24,6 +24,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+
 using namespace std;
 using std::chrono::seconds;
 using namespace caf;
@@ -34,37 +36,15 @@ using namespace caf;
   struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
   }
 
-template<class T>
-struct matrix_t {
-  matrix_t(size_t y, size_t x) 
-      : width_(x)
-      , v_(y * x){
-    // nop 
-  }
-  matrix_t() = default;
-  matrix_t(const matrix_t&) = default;
-  matrix_t(matrix_t&&) = default;
-  matrix_t& operator=(const matrix_t&) = default;
-  matrix_t& operator=(matrix_t&&) = default;
-  
-  inline T& operator()(size_t y, size_t x) {
-    return v_[y * width_ + x];
-  };
-private:
-  size_t width_;
-  vector<T> v_;
-};
-
-
 class config : public actor_system_config {
 public:
   static int num_workers; // = 20;
   static int data_length; // = 1024;
   static int block_threshold; //= 16384;
 
-  static matrix_t<double> a;
-  static matrix_t<double> b;
-  static matrix_t<double> c;
+  static matrix2d<double> a;
+  static matrix2d<double> b;
+  static matrix2d<double> c;
   config() {
     opt_group{custom_options_, "global"}
       .add(data_length, "nnn,n", "data length")
@@ -73,9 +53,9 @@ public:
   }
 
   void initialize_data() const {
-    a = matrix_t<double>(data_length, data_length);
-    b = matrix_t<double>(data_length, data_length);
-    c = matrix_t<double>(data_length, data_length);
+    a = matrix2d<double>(data_length, data_length);
+    b = matrix2d<double>(data_length, data_length);
+    c = matrix2d<double>(data_length, data_length);
     
     for (int i = 0; i < data_length; i++) {
       for (int j = 0; j < data_length; j++) {
@@ -108,9 +88,9 @@ public:
     return 0;
   }
 };
-matrix_t<double> config::a;
-matrix_t<double> config::b;
-matrix_t<double> config::c;
+matrix2d<double> config::a;
+matrix2d<double> config::b;
+matrix2d<double> config::c;
 int config::num_workers = 20;
 int config::data_length = 1024;
 int config::block_threshold = 16384;

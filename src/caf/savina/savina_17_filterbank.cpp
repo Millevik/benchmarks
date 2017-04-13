@@ -24,6 +24,8 @@
 
 #include "caf/all.hpp"
 
+#include "savina_helper.hpp"
+
 using namespace std;
 using std::chrono::seconds;
 using namespace caf;
@@ -73,19 +75,6 @@ enum class message_channel {
   COUNT // reptresents to values().length in java 
 };
 
-template<class T>
-struct matrix_t {
-  void init(int y, int x) {
-    m.reserve(y);
-    for (int i = 0;  i < y; ++i) {
-      vector<T> tmp(x);
-      m.emplace_back(move(tmp));
-    }
-  }
-  vector<vector<T>> m; // m[y][x]
-};
-
-
 class config : public actor_system_config {
 public:
 
@@ -93,8 +82,8 @@ public:
   int num_simulations = 2048 + (max(2048, num_columns) * 2);
   static int num_channels; // = 8;
   int sink_print_rate = 100;
-  static matrix_t<double> h;
-  static matrix_t<double> f;
+  static matrix2d<double> h;
+  static matrix2d<double> f;
   static bool debug; // = false;
 
   config() {
@@ -109,21 +98,21 @@ public:
     int arg_int = config::num_channels;
     int max_channels = static_cast<int>(message_channel::COUNT) -1;
     num_channels = max(2, min(arg_int, max_channels));
-    h.init(num_channels, num_columns);
-    f.init(num_channels, num_columns);
+    h = matrix2d<double>(num_channels, num_columns);
+    f = matrix2d<double>(num_channels, num_columns);
     for (int j = 0; j < num_channels; j++) {
       for (int i = 0; i < num_columns; i++) {
-        h.m[j][i] =
+        h(j, i) =
           (1.0 * i * num_columns) + (1.0 * j * num_channels) + j + i + j + 1;
-        f.m[j][i] = (1.0 * i * j) + (1.0 * j * j) + j + i;
+        f(j, i) = (1.0 * i * j) + (1.0 * j * j) + j + i;
       }
     }
   }
 
 };
 int config::num_channels= 8;
-matrix_t<double> config::h;
-matrix_t<double> config::f;
+matrix2d<double> config::h;
+matrix2d<double> config::f;
 bool config::debug = false;
 
 struct next_msg {
@@ -404,13 +393,14 @@ struct branches_actor_state {
 
 behavior branches_actor_fun(stateful_actor<branches_actor_state>* self,
                             int num_channels, int num_columns,
-                            matrix_t<double> h, matrix_t<double> f,
+                            matrix2d<double> h, matrix2d<double> f,
                             actor next_actor) {
   auto& s = self->state; 
   s.banks.reserve(num_channels);
   for (int i = 0; i < num_channels; ++i) {
-    s.banks.emplace_back(
-      self->spawn(bank_actor_fun, i, num_columns, h.m[i], f.m[i], next_actor));
+    s.banks.emplace_back(self->spawn(bank_actor_fun, i, num_columns,
+                                     h.get_copy_of_line(i),
+                                     f.get_copy_of_line(i), next_actor));
   }
   return {
     [=](const value_msg& the_msg) {
