@@ -484,6 +484,7 @@ behavior quadrant_actor_fun(stateful_actor<quadrant_actor_state>* self,
       }
     },
     [=](request_exit_msg_atom exit_msg) {
+      auto& s = self->state;
       if (is_child_col_open()) {
         for (auto& loop_child : s.children) {
           self->send(loop_child, exit_msg);
