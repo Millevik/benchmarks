@@ -127,95 +127,7 @@ public:
 };
 random_gen point::r;
 
-// attanction!! savina uses a hashmap without
-// point is a custom type and requires the methods hashCode() and equal()
-// without they dont filter duplicates
-// and vector is probably much faster than a hashmap
 using point_collection = vector<point>;
-
-class facility {
-public:
-
-  // not used
-  //vector<facility> split(const facility& f) {
-    //// split points into four categories
-    //vector<point_collection> point_split = {
-      //point_collection(),
-      //point_collection(),
-      //point_collection(),
-      //point_collection()
-    //};
-    //point temp_center = point::find_center(f.points);
-    //for (point loop_point : f.points) {
-      //double x_diff = loop_point.x - temp_center.x;
-      //double y_diff = loop_point.y - temp_center.y;
-      //if (x_diff > 0 && y_diff > 0) {
-          //point_split[0].emplace_back(loop_point);
-      //} else if (x_diff < 0 && y_diff > 0) {
-          //point_split[1].emplace_back(loop_point);
-      //} else if (x_diff < 0 && y_diff < 0) {
-          //point_split[2].emplace_back(loop_point);
-      //} else {
-          //point_split[3].emplace_back(loop_point);
-      //}
-    //}
-    //if (config::debug) {
-      //cout << "split: " << f.points.size() << " into " << point_split[0].size()
-           //<< ", " << point_split[1].size() << ", " << point_split[2].size()
-           //<< " and " << point_split[3].size() << endl;
-    //}
-    //// create new facilities
-    //facility f1 = make_facility(point_split[0]);
-    //facility f2 = make_facility(point_split[1]);
-    //facility f3 = make_facility(point_split[2]);
-    //facility f4 = make_facility(point_split[3]);
-    //return {f1, f2, f3, f4};
-  //}
-
-  facility(const point& center) 
-      : center(center){
-    // nop
-  }
-  
-  void add_point(const point& p) {
-    double d = center.get_distance(p);
-    if (d > max_distance) {
-      max_distance = d;
-    }
-    distance += d;
-    points.emplace_back(p);
-  }
-
-  //int num_points() {
-    //return points.size();
-  //}
-
-  //double get_total_distance() {
-    //return distance;
-  //}
-
-  string to_string() const {
-    return string("facility{center: ") + center.to_string() + ", distance: "
-           + std::to_string(distance) + ", num-pts: "
-           + std::to_string(points.size()) + "}";
-  }
-
-private:
-  // not used
-  //facility make_facility(const point_collection& points) {
-    //point new_center = point::find_center(points);
-    //facility new_facility(new_center);
-    //for (auto& loop_point : points) {
-        //new_facility.add_point(loop_point);
-    //}
-    //return new_facility;
-  //}
-
-  point center;
-  double distance = 0.0;
-  double max_distance = 0.0;
-  point_collection points;
-};
 
 class box {
 public:
@@ -324,10 +236,10 @@ behavior quadrant_actor_fun(stateful_actor<quadrant_actor_state>* self,
                             box boundary, 
                             double threshold, 
                             int depth, 
-                            point_collection init_local_facilities,
+                            const point_collection& init_local_facilities,
                             int init_known_facilities,
                             int init_max_depth_of_known_open_facility, 
-                            point_collection init_customers) 
+                            const point_collection& init_customers) 
 {
   auto& s = self->state;
   // the facility associated with this quadrant if it were to open
@@ -344,10 +256,10 @@ behavior quadrant_actor_fun(stateful_actor<quadrant_actor_state>* self,
   s.total_cost = 0.0;
   // null when closed, non-null when open
   auto is_child_col_open = [=]() {
-    return self->state.children.size() > 0; //TODO is this ok??????ß
+    return self->state.children.size() > 0;
   };
   //auto is_box_col_open = [=]() {
-    //return self->state.children_boundaries.size() > 0; //TODO is this ok??????ß
+    //return self->state.children_boundaries.size() > 0;
   //};
   auto find_cost = [=](const point& point_value) {
     auto& s = self->state; 
