@@ -413,6 +413,7 @@ add_caf_savina_benchmark(savina_25_apsp)
 add_caf_savina_benchmark(savina_26_sor)
 add_caf_savina_benchmark(savina_29_fib)
 add_caf_savina_benchmark(savina_28_nqueenk)
+add_caf_savina_benchmark(savina_30_bitonicsort)
 
 add_caf_numa_benchmark(numa_matrix_search)
 
