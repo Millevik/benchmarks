@@ -283,7 +283,8 @@ behavior partition_bitonic_sequence_actor_fun(event_based_actor* self,
   vector<actor> worker_actors;
   worker_actors.reserve(half_length);
   for (int i = 0; i < half_length; ++i) {
-    self->spawn(compare_exchange_actor_fun, i, sort_dir, joiner_actor);
+    worker_actors.emplace_back(
+      self->spawn(compare_exchange_actor_fun, i, sort_dir, joiner_actor));
   }
   auto splitter_actor = self->spawn(round_robin_splitter_actor_fun,
                                     string("partition-") + to_string(order_id),
