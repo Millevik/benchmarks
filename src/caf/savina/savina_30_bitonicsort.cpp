@@ -83,7 +83,7 @@ behavior data_value_adapter_actor_fun(event_based_actor* self,
 struct round_robin_splitter_actor_state;
 behavior round_robin_splitter_actor_fun(
   stateful_actor<round_robin_splitter_actor_state>* self,
-  const string& /*name*/, int length, const vector<actor>& receivers_);
+  const string& /*name*/, int length, vector<actor>&& receivers_);
 struct round_robin_joiner_actor_state;
 behavior round_robin_joiner_actor_fun(
   stateful_actor<round_robin_joiner_actor_state>* self, string /*name*/,
@@ -152,9 +152,9 @@ struct round_robin_splitter_actor_state {
 
 behavior round_robin_splitter_actor_fun(
   stateful_actor<round_robin_splitter_actor_state>* self,
-  const string& /*name*/, int length, const vector<actor>& receivers_) {
+  const string& /*name*/, int length, vector<actor>&& receivers_) {
   auto& s = self->state;
-  s.receivers = receivers_;
+  s.receivers = move(receivers_);
   return {
     [=](value_msg& vm) {
       auto& s = self->state;
