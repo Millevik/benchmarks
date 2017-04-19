@@ -394,7 +394,7 @@ behavior step_of_last_merge_actor_fun(event_based_actor* self, int length,
     [=](value_msg& vm) {
       self->send(splitter_actor, vm); 
     },
-    [=](exit_msg em) {
+    [=](exit_msg_atom em) {
       self->send(splitter_actor, em);
       self->quit();
     }
@@ -550,7 +550,7 @@ behavior validation_actor_fun(stateful_actor<validation_actor_state>* self,
       auto& s = self->state;
       s.values_so_far += 1;
       if (config::debug) {
-        //s.sb << vm.value << " ";
+        s.sb << vm.value << " ";
       }
       if (vm.value < s.prev_value && get<0>(s.error_value) < 0) {
         s.error_value = make_tuple(vm.value, s.values_so_far - 1);
