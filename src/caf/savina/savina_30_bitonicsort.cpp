@@ -110,7 +110,8 @@ behavior int_source_actor_fun(stateful_actor<init_source_actor_state>* self,
                               int num_values, long max_value, long seed,
                               actor next_actor);
 struct validation_actor_state;
-behavior validation_actor_fun(stateful_actor<validation_actor_state>* self, int num_values);
+behavior validation_actor_fun(stateful_actor<validation_actor_state>* self,
+                              int num_values);
 
 behavior value_data_adapter_actor_fun(event_based_actor* self, int order_id,
                                       actor next_actor) {
@@ -506,8 +507,9 @@ struct init_source_actor_state {
   ostringstream sb;
 };
 
-behavior int_source_actor_fun(stateful_actor<init_source_actor_state>* self, int num_values,
-                              long max_value, long seed, actor next_actor) {
+behavior int_source_actor_fun(stateful_actor<init_source_actor_state>* self,
+                              int num_values, long max_value, long seed,
+                              actor next_actor) {
   auto& s = self->state;
   s.random.set_seed(seed);
   return {
@@ -540,7 +542,8 @@ struct validation_actor_state {
   ostringstream sb;
 };
 
-behavior validation_actor_fun(stateful_actor<validation_actor_state>* self, int num_values) {
+behavior validation_actor_fun(stateful_actor<validation_actor_state>* self,
+                              int num_values) {
   return {
     [=](value_msg& vm) {
       auto& s = self->state;
@@ -561,12 +564,14 @@ behavior validation_actor_fun(stateful_actor<validation_actor_state>* self, int 
           cout << "  OUTPUT: " << s.sb.str() << endl;
         }
         if (get<0>(s.error_value) >= 0) {
-          cout << "  ERROR: value out of place: " << get<0>(s.error_value) << " at index " << get<1>(s.error_value) << endl;
+          cout << "  ERROR: value out of place: " << get<0>(s.error_value)
+               << " at index " << get<1>(s.error_value) << endl;
         } else {
           cout <<"  Elements sum: " << s.sum_so_far << endl;
         }
       } else {
-        cout <<"  ERROR: early exit triggered, received only " << s.values_so_far << " values!" << endl;
+        cout << "  ERROR: early exit triggered, received only "
+             << s.values_so_far << " values!" << endl;
       }
       self->quit();
     }
