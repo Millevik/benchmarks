@@ -80,7 +80,7 @@ public:
 
   int compare(double d1, double d2) const {
     // ignore NAN and other double problems
-    // probably faster than the java doubel compare implemenation
+    // probably faster than the java double compare implemenation
     if (d1 < d2)
         return -1;
     if (d1 > d2)
@@ -160,7 +160,6 @@ behavior worker_fun(event_based_actor* self, actor master, int /*id*/) {
                           sr_b + new_dim, sc_b + new_dim, sr_c + new_dim,
                           sc_c + new_dim, new_num_blocks, new_dim});
     } else {
-      aout(self) << "XXX" << endl;
       auto& a = config::a;
       auto& b = config::b;
       auto& c = config::c;

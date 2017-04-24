@@ -402,15 +402,17 @@ add_caf_savina_benchmark(savina_15_banking REQUEST_THEN HIGH_TIMEOUT)
 add_caf_savina_benchmark(savina_15_banking BECOME_UNBECOME_SLOW)
 add_caf_savina_benchmark(savina_15_banking BECOME_UNBECOME_FAST)
 add_caf_savina_benchmark(savina_16_radixsort)
-add_caf_savina_benchmark(savina_17_filterbank)
+#add_caf_savina_benchmark(savina_17_filterbank) savina implementation is buggy 
 add_caf_savina_benchmark(savina_18_sieve)
-#add_caf_savina_benchmark(savina_19_uct)
+#add_caf_savina_benchmark(savina_19_uct) bench uses busy waiting
 add_caf_savina_benchmark(savina_20_facloc)
 add_caf_savina_benchmark(savina_21_trapezoid)
+#add_caf_savina_benchmark(savina_22_piprecision) bench uses BigDecimal
 add_caf_savina_benchmark(savina_23_recmatmul)
 add_caf_savina_benchmark(savina_24_quicksort)
 add_caf_savina_benchmark(savina_25_apsp)
-add_caf_savina_benchmark(savina_26_sor)
+#add_caf_savina_benchmark(savina_26_sor) savina implementation is buggy
+#add_caf_savina_benchmark(savina_28_astar) bench uses busy waiting
 add_caf_savina_benchmark(savina_29_fib)
 add_caf_savina_benchmark(savina_28_nqueenk)
 add_caf_savina_benchmark(savina_30_bitonicsort)
