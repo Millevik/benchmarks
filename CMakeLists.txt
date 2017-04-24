@@ -389,8 +389,8 @@ add_caf_savina_benchmark(savina_08_concdict)
 add_caf_savina_benchmark(savina_09_concsll)
 add_caf_savina_benchmark(savina_10_bndbuffer)
 add_caf_savina_benchmark(savina_11_philosopher)
-add_caf_savina_benchmark(savina_12_barber)
-add_caf_savina_benchmark(savina_13_cigsmok)
+#add_caf_savina_benchmark(savina_12_barber) bench uses busy waiting
+#add_caf_savina_benchmark(savina_13_cigsmok) bench uses busy waiting
 add_caf_savina_benchmark(savina_14_logmap REQUEST_AWAIT INFINITE)
 add_caf_savina_benchmark(savina_14_logmap REQUEST_AWAIT HIGH_TIMEOUT)
 add_caf_savina_benchmark(savina_14_logmap BECOME_UNBECOME_SLOW)
@@ -412,9 +412,9 @@ add_caf_savina_benchmark(savina_23_recmatmul)
 add_caf_savina_benchmark(savina_24_quicksort)
 add_caf_savina_benchmark(savina_25_apsp)
 #add_caf_savina_benchmark(savina_26_sor) savina implementation is buggy
-#add_caf_savina_benchmark(savina_28_astar) bench uses busy waiting
-add_caf_savina_benchmark(savina_29_fib)
+#add_caf_savina_benchmark(savina_27_astar) bench uses busy waiting
 add_caf_savina_benchmark(savina_28_nqueenk)
+add_caf_savina_benchmark(savina_29_fib)
 add_caf_savina_benchmark(savina_30_bitonicsort)
 
 add_caf_numa_benchmark(numa_matrix_search)
