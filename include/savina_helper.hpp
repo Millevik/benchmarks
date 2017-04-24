@@ -62,22 +62,24 @@ private:
 class random_gen {
 public:
   random_gen(long seed)
-      : r_(seed) {
-    // no
+      : seed_(seed) 
+      , r_(seed){
+    // nop
   }
 
   random_gen() = default;
 
   void set_seed(long seed) {
-    r_ =  std::default_random_engine(seed);
+    seed_ = seed;
   }
 
-  int next_int(int exclusive_max=std::numeric_limits<int>::max()) {
-    return r_() % (exclusive_max);
+  int next_int(int exclusive_max = 65535) {
+    return next_long() % exclusive_max;
   }
 
   long long next_long() {
-    return long_dis_(r_);
+    seed_ = ((seed_ * 1309) + 13849) & 65535;
+    return seed_;
   }
 
   double next_double() {
@@ -85,9 +87,8 @@ public:
   }
 
 private:
+  long seed_ = 74755; 
   std::default_random_engine r_;
-  std::uniform_int_distribution<long long> long_dis_;
   std::uniform_real_distribution<> double_dis_;
 };
-
 #endif // ERLANG_PATTERN_MATCHING_HPP
