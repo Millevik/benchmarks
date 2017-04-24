@@ -145,7 +145,7 @@ chameneos_chameneo_actor(stateful_actor<chameneos_chameneo_actor_state>* self,
     [=](chameneos_helper::meet_msg& msg) {
       auto& s = self->state;
       auto other_color = msg.color; 
-      auto sender = actor_cast<actor>(self->current_sender());
+      auto& sender = msg.sender;
       s.color = chameneos_helper::complement(s.color, other_color);
       ++s.meetings;
       self->send(
@@ -160,9 +160,9 @@ chameneos_chameneo_actor(stateful_actor<chameneos_chameneo_actor_state>* self,
       self->send(mall,
                  chameneos_helper::meet_msg{s.color, actor_cast<actor>(self)});
     },
-    [=](chameneos_helper::exit_msg& /*msg*/) {
+    [=](chameneos_helper::exit_msg& msg) {
       auto& s = self->state;
-      auto sender = actor_cast<actor>(self->current_sender());
+      auto& sender = msg.sender;
       s.color = chameneos_helper::faded_color();
       self->send(sender, chameneos_helper::meeting_count_msg{
                            s.meetings, actor_cast<actor>(self)});
@@ -205,14 +205,15 @@ behavior chameneos_mall_actor(stateful_actor<chameneos_mall_actor_state>* self,
       auto& s = self->state; 
       if (s.n > 0) {
         if (!s.waiting_chameneo) {
-          s.waiting_chameneo = actor_cast<actor>(self->current_sender());
+          s.waiting_chameneo = msg.sender;
         } else {
           --s.n;
           self->send(s.waiting_chameneo, msg);
           destroy(s.waiting_chameneo);
         } 
       } else {
-        self->send(actor_cast<actor>(self->current_sender()),
+        auto& sender = msg.sender;
+        self->send(sender,
                    chameneos_helper::exit_msg{actor_cast<actor>(self)});
       }
     } 
