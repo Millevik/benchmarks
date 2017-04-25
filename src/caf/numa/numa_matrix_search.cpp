@@ -113,12 +113,6 @@ public:
   }
 };
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
 using line_t = string;
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(search_fun_t<line_t>);
 

@@ -30,12 +30,6 @@ using namespace std;
 using std::chrono::seconds;
 using namespace caf;
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
 class config : public actor_system_config {
 public:
   static int n;

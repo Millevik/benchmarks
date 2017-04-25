@@ -26,12 +26,6 @@
 using namespace std;
 using namespace caf;
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
 struct ping_msg {
   int sender;
 };

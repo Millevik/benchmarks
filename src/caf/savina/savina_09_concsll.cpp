@@ -28,14 +28,6 @@
 using namespace std;
 using namespace caf;
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
-//using end_work_msg_atom = atom_constant<atom("endwork")>;
-
 class config : public actor_system_config {
 public:
   int num_entitites = 20;
@@ -55,27 +47,27 @@ int config::write_percentage = 10;
 int config::size_percentage = 1;
 
 struct write_msg {
-  //actor sender;
+  actor sender;
   int value;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(write_msg);
 
 struct contains_msg {
-  //actor sender;
+  actor sender;
   int value;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(contains_msg);
 
 struct size_msg {
-  //actor sender; 
+  actor sender; 
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(size_msg);
 
 struct result_msg {
-  //actor sender;
+  actor sender;
   int value;
 };
-constexpr auto do_work_msg = result_msg{-1};
+const auto do_work_msg = result_msg{actor(), -1};
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(result_msg);
 
 //using do_work_msg_atom = atom_constant<atom("dowork")>;
@@ -198,11 +190,13 @@ behavior worker_fun(event_based_actor* self, actor master, actor sorted_list,
       if (msg_count <= num_msgs_per_worker) {
         int an_int = random.next_int(100); 
         if (an_int < size_percent) {
-          self->send(sorted_list, size_msg{});
+          self->send(sorted_list, size_msg{actor_cast<actor>(self)});
         } else if (an_int < (size_percent + write_percent)) {
-          self->send(sorted_list, write_msg{random.next_int()});
+          self->send(sorted_list,
+                     write_msg{actor_cast<actor>(self), random.next_int()});
         } else {
-          self->send(sorted_list, contains_msg{random.next_int()});
+          self->send(sorted_list,
+                     contains_msg{actor_cast<actor>(self), random.next_int()});
         }
       } else {
         self->send(master, end_work_msg_atom::value); 
@@ -217,18 +211,21 @@ behavior sorted_list_fun(stateful_actor<sorted_linked_list<int>>* self) {
       auto& data_list = self->state;
       auto value = write_message.value; 
       data_list.add(value); 
-      return result_msg{value};
+      actor& sender =  write_message.sender;
+      return result_msg{move(sender), value};
     },
     [=](contains_msg& contains_message) {
       auto& data_list = self->state;
       auto value = contains_message.value;
       auto result = data_list.contains(value) ? 1 : 0;
-      return result_msg{result};
+      actor& sender = contains_message.sender;
+      return result_msg{move(sender), result};
     },
-    [=](size_msg&) {
+    [=](size_msg& read_message) {
       auto& data_list = self->state;
       auto value = data_list.size();
-      return result_msg{value};
+      actor& sender = read_message.sender;
+      return result_msg{move(sender), value};
     },
     [=](end_work_msg_atom) {
       self->quit(); 

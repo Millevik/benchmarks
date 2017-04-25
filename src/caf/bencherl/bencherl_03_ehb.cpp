@@ -34,12 +34,6 @@ using done_atom = atom_constant<atom("done")>;
 using are_you_keeping_up_atom = atom_constant<atom("areup")>;
 using i_am_keeping_up_atom = atom_constant<atom("iamup")>;
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
 //-define(ACK, 100).
 //-define(GSIZE, 20).
 enum {

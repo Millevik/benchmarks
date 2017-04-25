@@ -34,12 +34,6 @@ using done_atom = atom_constant<atom("done")>;
 using recvs_t = erlang_pattern_matching<actor>;
 using gens_t = vector<actor>;
 
-#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(type_name)                               \
-  namespace caf {                                                              \
-  template <>                                                                  \
-  struct allowed_unsafe_message_type<type_name> : std::true_type {};           \
-  }
-
 struct data_t {
   vector<uint64_t> d;
 };
