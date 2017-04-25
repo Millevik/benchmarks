@@ -24,7 +24,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
@@ -498,7 +498,7 @@ behavior bitonic_sort_kernel_actor_fun(event_based_actor* self, int n,
 }
 
 struct init_source_actor_state {
-  random_gen random;
+  pseudo_random random;
   ostringstream sb;
 };
 

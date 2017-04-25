@@ -23,7 +23,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using namespace caf;
@@ -54,7 +54,7 @@ int config::cons_cost = 25;
 
 double process_item(double cur_term, int cost) {
   double res = cur_term;
-  random_gen random(cost);
+  pseudo_random random(cost);
   if (cost > 0) {
     for (int i = 0; i < cost; i++) {
       for (int j = 0; j < 100; j++) {

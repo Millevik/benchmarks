@@ -24,7 +24,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
@@ -73,7 +73,7 @@ struct apsp_utils {
   void generate_graph() {
     auto n = config::n; 
     auto w = config::w;
-    random_gen random(n);
+    pseudo_random random(n);
     arr2l local_data = array_tabulate<long>(n, n, [](size_t, size_t) { 
       return 0; 
     });

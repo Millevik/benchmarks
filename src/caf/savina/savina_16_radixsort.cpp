@@ -23,7 +23,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
@@ -56,7 +56,7 @@ CAF_ALLOW_UNSAFE_MESSAGE_TYPE(value_msg);
 
 behavior int_source_actor_fun(event_based_actor* self, int num_values,
                               long long max_value, long long seed) {
-  random_gen random(seed);
+  pseudo_random random(seed);
   return {
     [=](next_actor_msg& nm) mutable {
       for (int i = 0; i < num_values; ++i) {

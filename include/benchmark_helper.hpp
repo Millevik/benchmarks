@@ -17,69 +17,44 @@
  * http://www.boost.org/LICENSE_1_0.txt.                                      *
  ******************************************************************************/
 
-#ifndef ERLANG_PATTERN_MATCHING_HPP
-#define ERLANG_PATTERN_MATCHING_HPP
+#ifndef BENCHMARK_HELPER_HPP
+#define BENCHMARK_HELPER_HPP
 
 #include <vector>
 #include <limits>
 #include <random>
 
-template<class T>
-struct matrix2d {
-  matrix2d(size_t y, size_t x) 
-      : v_(y) { // initalize all elements in the vector with T()
-    for (auto& v_line : v_) {
-      v_line = std::vector<T>(x); 
-    }
-  }
-
-  matrix2d() = default;
-  matrix2d(const matrix2d&) = default;
-  matrix2d(matrix2d&&) = default;
-  matrix2d& operator=(const matrix2d&) = default;
-  matrix2d& operator=(matrix2d&&) = default;
-  
-  inline T& operator()(size_t y, size_t x) {
-    return v_[y][x];
-  };
-
-  inline const T& operator()(size_t y, size_t x) const {
-    return v_[y][x];
-  };
-private:
-  std::vector<std::vector<T>> v_;
-};
-
-class random_gen {
+class pseudo_random {
 public:
-  random_gen(long seed)
-      : seed_(seed) 
-      , r_(seed){
+  pseudo_random(long seed)
+      : value_(seed) {
     // nop
   }
 
-  random_gen() = default;
+  pseudo_random() = default;
 
   void set_seed(long seed) {
-    seed_ = seed;
+    value_ = seed;
   }
 
-  int next_int(int exclusive_max = 65535) {
+  int next_int() {
+    return next_long();
+  }
+
+  int next_int(int exclusive_max) {
     return next_long() % exclusive_max;
   }
 
   long long next_long() {
-    seed_ = ((seed_ * 1309) + 13849) & 65535;
-    return seed_;
+    value_ = ((value_ * 1309) + 13849) & 65535;
+    return value_;
   }
 
   double next_double() {
-    return double_dis_(r_);
+    return 1.0 / next_long();
   }
 
 private:
-  long seed_ = 74755; 
-  std::default_random_engine r_;
-  std::uniform_real_distribution<> double_dis_;
+  long value_ = 74755; 
 };
-#endif // ERLANG_PATTERN_MATCHING_HPP
+#endif // BENCHMARK_HELPER_HPP

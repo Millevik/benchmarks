@@ -25,7 +25,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
@@ -69,11 +69,11 @@ int config::c = 1;
 
 class point {
 private:
-  static random_gen r;
+  static pseudo_random r;
 
 public:
   static void set_seed(long seed) {
-    r = random_gen(seed);
+    r = pseudo_random(seed);
   }
 
   static point random(double grid_size) {
@@ -119,7 +119,7 @@ public:
   double x;
   double y;
 };
-random_gen point::r;
+pseudo_random point::r;
 
 using point_collection = vector<point>;
 

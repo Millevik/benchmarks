@@ -24,7 +24,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
@@ -136,7 +136,7 @@ void check_sorted(const vector<long>& data) {
 vector<long> randomly_init_array() {
   vector<long> result;
   result.reserve(config::n);
-  random_gen random(config::s);
+  pseudo_random random(config::s);
   for (int i = 0; i < config::n; i++) {
     result.emplace_back(random.next_long() % config::m);
   }

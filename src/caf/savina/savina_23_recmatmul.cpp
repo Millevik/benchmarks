@@ -24,11 +24,37 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using std::chrono::seconds;
 using namespace caf;
+
+template<class T>
+struct matrix2d {
+  matrix2d(size_t y, size_t x) 
+      : v_(y) { // initalize all elements in the vector with T()
+    for (auto& v_line : v_) {
+      v_line = std::vector<T>(x); 
+    }
+  }
+
+  matrix2d() = default;
+  matrix2d(const matrix2d&) = default;
+  matrix2d(matrix2d&&) = default;
+  matrix2d& operator=(const matrix2d&) = default;
+  matrix2d& operator=(matrix2d&&) = default;
+  
+  inline T& operator()(size_t y, size_t x) {
+    return v_[y][x];
+  };
+
+  inline const T& operator()(size_t y, size_t x) const {
+    return v_[y][x];
+  };
+private:
+  std::vector<std::vector<T>> v_;
+};
 
 class config : public actor_system_config {
 public:

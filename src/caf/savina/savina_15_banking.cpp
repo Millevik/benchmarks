@@ -23,7 +23,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
   
 using namespace std;
 using std::chrono::seconds;
@@ -206,7 +206,7 @@ behavior account(stateful_actor<account_state>* self, int /*id*/, double balance
 struct teller_state {
   vector<actor> accounts;
   int num_completed_banks;
-  random_gen random; 
+  pseudo_random random; 
 };
 
 behavior teller(stateful_actor<teller_state>* self, int num_accounts, int num_bankings) {

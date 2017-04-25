@@ -22,7 +22,7 @@
 
 #include "caf/all.hpp"
 
-#include "savina_helper.hpp"
+#include "benchmark_helper.hpp"
 
 using namespace std;
 using namespace caf;
@@ -94,7 +94,7 @@ behavior worker_fun(event_based_actor* self, actor master, actor dictionary,
                       int id, int num_msgs_per_worker) {
   const auto write_percent = config::write_percentage;
   int message_count = 0;
-  random_gen random(id + num_msgs_per_worker + write_percent);
+  pseudo_random random(id + num_msgs_per_worker + write_percent);
   return {
     [=](result_msg&) mutable {
       ++message_count;
