@@ -25,13 +25,47 @@
 #include <random>
 
 
-// 2D matrix class for the java/scala construct T[][]
+//// 2D matrix class for the java/scala construct T[][]
+//template<class T>
+//struct matrix2d {
+  //matrix2d(size_t y, size_t x) 
+      //: width_(x)
+      //, v_(y * x) { // initalize all elements in the vector with T()
+    //// nop 
+  //}
+
+  //matrix2d() = default;
+  //matrix2d(const matrix2d&) = default;
+  //matrix2d(matrix2d&&) = default;
+  //matrix2d& operator=(const matrix2d&) = default;
+  //matrix2d& operator=(matrix2d&&) = default;
+  
+  //inline T& operator()(size_t y, size_t x) {
+    //return v_[y * width_ + x];
+  //};
+
+  //inline const T& operator()(size_t y, size_t x) const {
+    //return v_[y * width_ + x];
+  //};
+
+  //inline std::vector<T> get_copy_of_line(size_t y) const {
+    //std::vector<T> result;
+    //result.reserve(width_);
+    //copy_n(begin(v_) + y, width_, back_inserter(result));
+    //return result;
+  //};
+//private:
+  //size_t width_;
+  //std::vector<T> v_;
+//};
+
 template<class T>
 struct matrix2d {
   matrix2d(size_t y, size_t x) 
-      : width_(x)
-      , v_(y * x) { // initalize all elements in the vector with T()
-    // nop 
+      : v_(y) { // initalize all elements in the vector with T()
+    for (auto& v_line : v_) {
+      v_line = std::vector<T>(x); 
+    }
   }
 
   matrix2d() = default;
@@ -41,22 +75,21 @@ struct matrix2d {
   matrix2d& operator=(matrix2d&&) = default;
   
   inline T& operator()(size_t y, size_t x) {
-    return v_[y * width_ + x];
+    return v_[y][x];
   };
 
   inline const T& operator()(size_t y, size_t x) const {
-    return v_[y * width_ + x];
+    return v_[y][x];
   };
 
-  inline std::vector<T> get_copy_of_line(size_t y) const {
-    std::vector<T> result;
-    result.reserve(width_);
-    copy_n(begin(v_) + y, width_, back_inserter(result));
-    return result;
-  };
+  //inline std::vector<T> get_copy_of_line(size_t y) const {
+    //std::vector<T> result;
+    //result.reserve(width_);
+    //copy_n(begin(v_) + y, width_, back_inserter(result));
+    //return result;
+  //};
 private:
-  size_t width_;
-  std::vector<T> v_;
+  std::vector<std::vector<T>> v_;
 };
 
 class random_gen {
