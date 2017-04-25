@@ -111,80 +111,81 @@ CAF_ALLOW_UNSAFE_MESSAGE_TYPE(work_msg);
 using done_msg_atom = atom_constant<atom("done")>;
 using stop_msg_atom = atom_constant<atom("stop")>;
 
+void my_rec_mat(int& threshold, event_based_actor* self, actor& master, work_msg& work_message) {
+  int sr_a = work_message.sr_a;
+  int sc_a = work_message.sc_a;
+  int sr_b = work_message.sr_b;
+  int sc_b = work_message.sc_b;
+  int sr_c = work_message.sr_c;
+  int sc_c = work_message.sc_c;
+  int num_blocks = work_message.num_blocks;
+  int dim = work_message.dim;
+  int new_priority = work_message.priority + 1;
+  if (num_blocks > threshold) {
+    int zer_dim = 0;
+    int new_dim = dim / 2;
+    int new_num_blocks = num_blocks / 4;
+    self->send(master,
+               work_msg{new_priority, sr_a + zer_dim, sc_a + zer_dim,
+                        sr_b + zer_dim, sc_b + zer_dim, sr_c + zer_dim,
+                        sc_c + zer_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + zer_dim, sc_a + new_dim,
+                        sr_b + new_dim, sc_b + zer_dim, sr_c + zer_dim,
+                        sc_c + zer_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + zer_dim, sc_a + zer_dim,
+                        sr_b + zer_dim, sc_b + new_dim, sr_c + zer_dim,
+                        sc_c + new_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + zer_dim, sc_a + new_dim,
+                        sr_b + new_dim, sc_b + new_dim, sr_c + zer_dim,
+                        sc_c + new_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + new_dim, sc_a + zer_dim,
+                        sr_b + zer_dim, sc_b + zer_dim, sr_c + new_dim,
+                        sc_c + zer_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + new_dim, sc_a + new_dim,
+                        sr_b + new_dim, sc_b + zer_dim, sr_c + new_dim,
+                        sc_c + zer_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + new_dim, sc_a + zer_dim,
+                        sr_b + zer_dim, sc_b + new_dim, sr_c + new_dim,
+                        sc_c + new_dim, new_num_blocks, new_dim});
+    self->send(master,
+               work_msg{new_priority, sr_a + new_dim, sc_a + new_dim,
+                        sr_b + new_dim, sc_b + new_dim, sr_c + new_dim,
+                        sc_c + new_dim, new_num_blocks, new_dim});
+  } else {
+    auto& a = config::a;
+    auto& b = config::b;
+    auto& c = config::c;
+    int end_r = sr_c + dim;
+    int end_c = sc_c + dim;
+    int i = sr_c;
+    while (i < end_r) {
+      int j = sc_c;
+      while (j < end_c) {
+        {
+          int k = 0;
+          while (k < dim) {
+            c(i, j) += a(i, sc_a + k) * b(sr_b + k, j);
+            k += 1;
+          }
+        }
+        j += 1;
+      }
+      i += 1;
+    }
+  }
+}
+
 behavior worker_fun(event_based_actor* self, actor master, int /*id*/) {
   int threshold = config::block_threshold;
-  auto my_rec_mat = [=](work_msg& work_message) {
-    int sr_a = work_message.sr_a;
-    int sc_a = work_message.sc_a;
-    int sr_b = work_message.sr_b;
-    int sc_b = work_message.sc_b;
-    int sr_c = work_message.sr_c;
-    int sc_c = work_message.sc_c;
-    int num_blocks = work_message.num_blocks;
-    int dim = work_message.dim;
-    int new_priority = work_message.priority + 1;
-    if (num_blocks > threshold) {
-      int zer_dim = 0;
-      int new_dim = dim / 2;
-      int new_num_blocks = num_blocks / 4;
-      self->send(master,
-                 work_msg{new_priority, sr_a + zer_dim, sc_a + zer_dim,
-                          sr_b + zer_dim, sc_b + zer_dim, sr_c + zer_dim,
-                          sc_c + zer_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + zer_dim, sc_a + new_dim,
-                          sr_b + new_dim, sc_b + zer_dim, sr_c + zer_dim,
-                          sc_c + zer_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + zer_dim, sc_a + zer_dim,
-                          sr_b + zer_dim, sc_b + new_dim, sr_c + zer_dim,
-                          sc_c + new_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + zer_dim, sc_a + new_dim,
-                          sr_b + new_dim, sc_b + new_dim, sr_c + zer_dim,
-                          sc_c + new_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + new_dim, sc_a + zer_dim,
-                          sr_b + zer_dim, sc_b + zer_dim, sr_c + new_dim,
-                          sc_c + zer_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + new_dim, sc_a + new_dim,
-                          sr_b + new_dim, sc_b + zer_dim, sr_c + new_dim,
-                          sc_c + zer_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + new_dim, sc_a + zer_dim,
-                          sr_b + zer_dim, sc_b + new_dim, sr_c + new_dim,
-                          sc_c + new_dim, new_num_blocks, new_dim});
-      self->send(master,
-                 work_msg{new_priority, sr_a + new_dim, sc_a + new_dim,
-                          sr_b + new_dim, sc_b + new_dim, sr_c + new_dim,
-                          sc_c + new_dim, new_num_blocks, new_dim});
-    } else {
-      auto& a = config::a;
-      auto& b = config::b;
-      auto& c = config::c;
-      int end_r = sr_c + dim;
-      int end_c = sc_c + dim;
-      int i = sr_c;
-      while (i < end_r) {
-        int j = sc_c;
-        while (j < end_c) {
-          {
-            int k = 0;
-            while (k < dim) {
-              c(i, j) += a(i, sc_a + k) * b(sr_b + k, j);
-              k += 1;
-            }
-          }
-          j += 1;
-        }
-        i += 1;
-      }
-    }
-  };
   return  {
-    [=](work_msg& work_message) {
-      my_rec_mat(work_message);
+    [=](work_msg& work_message) mutable {
+      my_rec_mat(threshold, self, master, work_message);
       self->send(master, done_msg_atom::value);
     },
     [=](stop_msg_atom the_msg) {
