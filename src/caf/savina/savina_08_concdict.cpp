@@ -28,23 +28,23 @@ using namespace std;
 using namespace caf;
 
 struct write_msg {
-  //actor sender;
+  actor sender;
   int key;
   int value;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(write_msg);
 
 struct read_msg {
-  //actor sender;
+  actor sender;
   int key;
 };
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(read_msg);
 
 struct result_msg {
-  //actor sender
+  actor sender;
   int key;
 };
-constexpr auto do_work_msg = result_msg{-1};
+const auto do_work_msg = result_msg{actor(),-1};
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(result_msg);
 
 using end_work_msg_atom = atom_constant<atom("endwork")>;
@@ -65,22 +65,22 @@ public:
 };
 int config::write_percentage = 10;
 
-
 behavior dictionary_fun(stateful_actor<config::data_map>* self) {
   return {
-    [=](write_msg& write_message) -> result<result_msg> {
+    [=](write_msg& write_message) {
       auto& key = write_message.key;
       auto& value = write_message.value;
       self->state[key] = value;
-      return {result_msg{value}};
+      auto& sender = write_message.sender;
+      self->send(sender, result_msg{actor_cast<actor>(self), value});
     },
-    [=](read_msg& read_message) -> result<result_msg> {
-      //auto value = self->state[read_message.key];
+    [=](read_msg& read_message) {
       auto it = self->state.find(read_message.key);
+      auto& sender = read_message.sender;
       if (it != end(self->state)) {
-        return {result_msg{it->second}};
+        self->send(sender, result_msg{actor_cast<actor>(self), it->second});
       } else {
-        return {result_msg{-1}};
+        self->send(sender, result_msg{actor_cast<actor>(self), -1});
       }
     },
     [=](end_work_msg_atom) {
@@ -101,9 +101,12 @@ behavior worker_fun(event_based_actor* self, actor master, actor dictionary,
       if (message_count <= num_msgs_per_worker) {
         int an_int = random.next_int(100);
         if (an_int < write_percent) {
-          self->send(dictionary, write_msg{random.next_int(), random.next_int()});
+          self->send(dictionary,
+                     write_msg{actor_cast<actor>(self), random.next_int(),
+                               random.next_int()});
         } else {
-          self->send(dictionary, read_msg{random.next_int()});
+          self->send(dictionary,
+                     read_msg{actor_cast<actor>(self), random.next_int()});
         }
       } else {
         self->send(master, end_work_msg_atom::value);
@@ -113,8 +116,8 @@ behavior worker_fun(event_based_actor* self, actor master, actor dictionary,
   };
 }
 
-behavior master_fun(event_based_actor* self, int num_workers, int num_msgs_per_worker) {
-
+behavior master_fun(event_based_actor* self, int num_workers,
+                    int num_msgs_per_worker) {
   vector<actor> workers;
   workers.reserve(num_workers);
   auto dictionary = self->spawn(dictionary_fun);
