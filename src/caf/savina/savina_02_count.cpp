@@ -24,21 +24,40 @@
 using namespace std;
 using namespace caf;
 
-using increment_atom = atom_constant<atom("increment")>;
-using retreive_atom = atom_constant<atom("retreive")>;
-using result_atom = atom_constant<atom("result")>;
+class config : public actor_system_config {
+public:
+  static int n; //= 1e6;
 
-behavior produce_actor(event_based_actor* self, int count, actor counting) {
+  config() {
+    opt_group{custom_options_, "global"}.add(n, "num,n", "number of messages");
+  }
+};
+int config::n = 1e6;
+
+using increment_atom = atom_constant<atom("increment")>;
+
+struct retrieve_msg {
+  actor sender;
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(retrieve_msg);
+
+struct result_msg {
+  int result;
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(result_msg);
+
+behavior producer_actor(event_based_actor* self, actor counting) {
   return {
     [=](increment_atom) {
-      for (int i = 0; i < count; ++i) {
+      for (int i = 0; i < config::n; ++i) {
         self->send(counting, increment_atom::value);
       }
-      self->send(counting, retreive_atom::value);
+      self->send(counting, retrieve_msg{actor_cast<actor>(self)});
     },
-    [=](result_atom, int result) {
-      if (result != count) {
-        cout << "ERROR: expected: " << count << ", found: " << result << endl;
+    [=](result_msg& m) {
+      auto result = m.result;
+      if (result != config::n) {
+        cout << "ERROR: expected: " << config::n << ", found: " << result << endl;
       } else {
         cout << "SUCCESS! received: " << result << endl;
       }
@@ -52,24 +71,15 @@ behavior counting_actor(stateful_actor<int>* self) {
     [=](increment_atom) { 
       ++self->state; 
     },
-    [=](retreive_atom) -> result<result_atom, int> {
-      return {result_atom::value, self->state};
+    [=](retrieve_msg& m) {
+      self->send(m.sender, result_msg{self->state});
     }
   };
 }
 
-class config : public actor_system_config {
-public:
-  int n = 1e6;
-
-  config() {
-    opt_group{custom_options_, "global"}.add(n, "num,n", "number of messages");
-  }
-};
-
 void caf_main(actor_system& system, const config& cfg) {
   auto counting = system.spawn(counting_actor);
-  auto produce = system.spawn(produce_actor, cfg.n, counting);
+  auto produce = system.spawn(producer_actor, cfg.n, counting);
   anon_send(produce, increment_atom::value);
 }
 
