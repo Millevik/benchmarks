@@ -24,27 +24,36 @@
 using namespace std;
 using namespace caf;
 
-using start_atom = atom_constant<atom("start")>;
-using ping_atom = atom_constant<atom("ping")>;
-using pong_atom = atom_constant<atom("pong")>;
-using stop_atom = atom_constant<atom("stop")>;
+using start_msg_atom = atom_constant<atom("start")>;
+using ping_msg_atom = atom_constant<atom("ping")>;
+using stop_msg_atom = atom_constant<atom("stop")>;
+
+struct send_ping_msg {
+  actor sender;
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(send_ping_msg);
+
+struct send_pong_msg {
+  actor sender;
+};
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(send_pong_msg);
 
 behavior ping_actor(stateful_actor<int>* self, int count, actor pong) {
   self->state = count;
   return {
-    [=](start_atom) {
-        self->send(pong, ping_atom::value);
+    [=](start_msg_atom) {
+        self->send(pong, send_ping_msg{actor_cast<actor>(self)});
         --self->state;
       },
-      [=](ping_atom) {
-        self->send(pong, ping_atom::value);
+      [=](ping_msg_atom) {
+        self->send(pong, send_ping_msg{actor_cast<actor>(self)});
         --self->state;
       },
-      [=](pong_atom) {
+      [=](send_pong_msg&) {
         if (self->state > 0) {
-          self->send(self, ping_atom::value);
+          self->send(self, ping_msg_atom::value);
         } else {
-          self->send(pong, stop_atom::value);
+          self->send(pong, stop_msg_atom::value);
           self->quit();
         }
     }
@@ -54,11 +63,12 @@ behavior ping_actor(stateful_actor<int>* self, int count, actor pong) {
 behavior pong_actor(stateful_actor<int>* self) {
   self->state = 0;
   return {
-    [=](ping_atom) { 
+    [=](send_ping_msg& msg) { 
+      auto& sender = msg.sender;
+      self->send(sender, send_pong_msg{actor_cast<actor>(self)}); 
       ++self->state;
-      return pong_atom::value; 
     },
-    [=](stop_atom) { 
+    [=](stop_msg_atom) { 
       self->quit(); 
     }
   };
@@ -76,7 +86,7 @@ public:
 void caf_main(actor_system& system, const config& cfg) {
   auto pong = system.spawn(pong_actor);
   auto ping = system.spawn(ping_actor, cfg.n, pong);
-  anon_send(ping, start_atom::value);
+  anon_send(ping, start_msg_atom::value);
 }
 
 CAF_MAIN()
