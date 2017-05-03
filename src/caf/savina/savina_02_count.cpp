@@ -29,7 +29,8 @@ public:
   static int n; //= 1e6;
 
   config() {
-    opt_group{custom_options_, "global"}.add(n, "num,n", "number of messages");
+    opt_group{custom_options_, "global"}
+    .add(n, "num,n", "number of messages");
   }
 };
 int config::n = 1e6;
@@ -57,7 +58,8 @@ behavior producer_actor(event_based_actor* self, actor counting) {
     [=](result_msg& m) {
       auto result = m.result;
       if (result != config::n) {
-        cout << "ERROR: expected: " << config::n << ", found: " << result << endl;
+        cout << "ERROR: expected: " << config::n << ", found: " << result
+             << endl;
       } else {
         cout << "SUCCESS! received: " << result << endl;
       }
@@ -79,8 +81,8 @@ behavior counting_actor(stateful_actor<int>* self) {
 
 void caf_main(actor_system& system, const config& cfg) {
   auto counting = system.spawn(counting_actor);
-  auto produce = system.spawn(producer_actor, cfg.n, counting);
-  anon_send(produce, increment_atom::value);
+  auto producer = system.spawn(producer_actor, counting);
+  anon_send(producer, increment_atom::value);
 }
 
 CAF_MAIN()

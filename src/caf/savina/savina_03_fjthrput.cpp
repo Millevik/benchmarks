@@ -29,7 +29,8 @@ void perform_computation(double theta) {
   double sint = sin(theta);
   double res = sint * sint;
   if (res <= 0) {
-    throw string("Benchmark exited with unrealistic res value " + to_string(res));
+    throw string("Benchmark exited with unrealistic res value "
+                 + to_string(res));
   }
 }
 
